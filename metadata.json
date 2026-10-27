@@ -1,0 +1,6 @@
+{
+  "name": "سجل الديون",
+  "description": "نظام محاسبي متكامل لإدارة سجل الديون، التسديدات، والتقارير المالية - صدقة جارية عن أحمد أبو رسلان",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">سجل الديون</string>
+    <string name="dedication_banner">صدقة جارية عن أحمد أبو رسلان</string>
+    <string name="system_subtitle">النظام المحاسبي المتكامل لإدارة الديون والتسديدات</string>
+    <string name="nav_dashboard">لوحة التحكم</string>
+    <string name="nav_debtors">المدينون</string>
+    <string name="nav_reports">التقارير والجرد</string>
+    <string name="nav_backup">النسخ والتصدير</string>
+    <string name="kpi_total_debts">إجمالي الديون المستحقة</string>
+    <string name="kpi_total_paid">إجمالي التسديدات المحصلة</string>
+    <string name="kpi_net_liquidity">صافي السيولة والتحصيل</string>
+    <string name="kpi_active_debtors">المدينون النشطون</string>
+    <string name="action_new_transaction">عملية جديدة</string>
+    <string name="action_new_debtor">إضافة مدين</string>
+    <string name="clearance_title">إغلاق الذمة المالية وتصفير الحساب</string>
+    <string name="clearance_share_whatsapp">إرسال سند براءة ذمة (واتساب)</string>
+    <string name="clearance_print_pdf">طباعة / حفظ سند المخالصة PDF</string>
+</resources>

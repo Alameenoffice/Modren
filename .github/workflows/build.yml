@@ -1,0 +1,94 @@
+name: Build Android APK & Deploy PWA
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-android-apk:
+    name: Build Installable Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Normalize Gradle & AGP for Standard GitHub Runner (Gradle 8.10.2 / AGP 8.7.2 / SDK 35)
+        run: |
+          if [ -f gradle/wrapper/gradle-wrapper.properties ]; then
+            sed -i 's|gradle-.*-bin.zip|gradle-8.10.2-bin.zip|g' gradle/wrapper/gradle-wrapper.properties
+          fi
+          sed -i 's/agp = ".*"/agp = "8.7.2"/g' gradle/libs.versions.toml
+          sed -i 's/kotlin = ".*"/kotlin = "2.0.21"/g' gradle/libs.versions.toml
+          sed -i 's/googleDevtoolsKsp = ".*"/googleDevtoolsKsp = "2.0.21-1.0.27"/g' gradle/libs.versions.toml
+          sed -i 's/coreKtx = ".*"/coreKtx = "1.15.0"/g' gradle/libs.versions.toml
+          sed -i 's/compileSdk { version = release(36) { minorApiLevel = 1 } }/compileSdk = 35/g' app/build.gradle.kts
+          sed -i 's/targetSdk = 36/targetSdk = 35/g' app/build.gradle.kts
+
+      - name: Setup Gradle 8.10.2
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Generate Debug Keystore if Missing
+        run: |
+          if [ ! -f debug.keystore ]; then
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Build Debug APK
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Upload Installable APK to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sijil-AlDuyun-Android-APK
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+  deploy-pwa-web:
+    name: Package & Deploy Progressive Web App (PWA)
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Upload PWA Bundle as Downloadable Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sijil-AlDuyun-Web-PWA
+          path: pwa-web/
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'pwa-web'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

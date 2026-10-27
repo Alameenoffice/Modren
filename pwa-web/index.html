@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سجل الديون والمحاسبة (IQD | USD) | صدقة جارية عن أحمد أبو رسلان</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --sidebar: #0F172A;
+      --text: #0F172A;
+      --muted: #64748B;
+      --border: #E2E8F0;
+      --primary: #2563EB;
+      --emerald: #10B981;
+      --crimson: #EF4444;
+    }
+    body.dark {
+      --bg: #0B1120;
+      --surface: #1E293B;
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; font-family: 'Cairo', sans-serif; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    .dedication-bar { background: #0F172A; color: #6EE7B7; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 0.9rem; border-bottom: 1px solid #1E293B; }
+    .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .container { max-width: 1200px; width: 100%; margin: 20px auto; padding: 0 16px; flex: 1; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: 0 2px 8px rgba(15,23,42,0.04); margin-bottom: 16px; }
+    .btn { border: none; border-radius: 10px; padding: 10px 16px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: 0.15s; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-emerald { background: var(--emerald); color: #fff; }
+    .btn-crimson { background: var(--crimson); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { padding: 12px; border-bottom: 1px solid var(--border); text-align: right; font-size: 0.92rem; }
+    input, select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); margin-bottom: 10px; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,0.65); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
+    .modal { background: var(--surface); border-radius: 18px; max-width: 520px; width: 100%; padding: 24px; border: 2px solid var(--emerald); text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="dedication-bar">
+    <span>صدقة جارية عن أحمد أبو رسلان</span>
+    <span>نظام العملات المزدوج (دينار عراقي د.ع IQD | دولار أمريكي $ USD)</span>
+  </div>
+  <header class="header">
+    <div>
+      <h2 style="font-size:1.25rem;">نظام سجل الديون والتقارير المالية (IQD | USD)</h2>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <span style="font-size:0.85rem;color:var(--muted);">سعر الصرف التقريبي (1$):</span>
+      <input id="rateInput" type="number" value="1500" style="width:95px;margin:0;padding:6px 8px;" onchange="render()" />
+      <button class="btn btn-outline" onclick="document.body.classList.toggle('dark')">الوضع الليلي</button>
+      <button class="btn btn-emerald" onclick="exportCsv()">تصدير Excel CSV</button>
+      <button class="btn btn-primary" onclick="downloadBackup()">نسخة احتياطية JSON</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="kpi-grid">
+      <div class="card">
+        <div style="color:var(--muted);font-size:0.85rem;">إجمالي الديون المستحقة (د.ع | $)</div>
+        <div id="kpiDebtIqd" style="font-size:1.35rem;font-weight:700;color:var(--crimson);margin-top:6px;">0 د.ع</div>
+        <div id="kpiDebtUsd" style="font-size:1.15rem;font-weight:700;color:var(--primary);margin-top:2px;">0 $</div>
+      </div>
+      <div class="card">
+        <div style="color:var(--muted);font-size:0.85rem;">إجمالي التسديدات المحصلة (د.ع | $)</div>
+        <div id="kpiPaidIqd" style="font-size:1.35rem;font-weight:700;color:var(--emerald);margin-top:6px;">0 د.ع</div>
+        <div id="kpiPaidUsd" style="font-size:1.15rem;font-weight:700;color:var(--emerald);margin-top:2px;">0 $</div>
+      </div>
+      <div class="card">
+        <div style="color:var(--muted);font-size:0.85rem;">الإجمالي التقديري الموحد (بسعر الصرف)</div>
+        <div id="kpiUnified" style="font-size:1.3rem;font-weight:700;color:var(--primary);margin-top:6px;">0 د.ع</div>
+        <div style="color:var(--muted);font-size:0.78rem;margin-top:4px;">مع بقاء السجلات الأساسية مفصولة تماماً</div>
+      </div>
+      <div class="card">
+        <div style="color:var(--muted);font-size:0.85rem;">المدينون النشطون</div>
+        <div id="kpiCount" style="font-size:1.5rem;font-weight:700;margin-top:6px;">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:12px;">تسجيل عملية مالية جديدة (IQD أو USD)</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;">
+        <input id="debtorName" placeholder="اسم المدين / الشركة" />
+        <input id="debtorPhone" placeholder="رقم الهاتف" />
+        <select id="txType">
+          <option value="PAYMENT">دفعة تسديد</option>
+          <option value="DEBT">إضافة دين جديد</option>
+        </select>
+        <select id="txCurrency">
+          <option value="IQD">دينار عراقي (د.ع / IQD)</option>
+          <option value="USD">دولار أمريكي ($ / USD)</option>
+        </select>
+        <input id="txAmount" type="number" placeholder="المبلغ" />
+        <input id="txNote" placeholder="البيان / الملاحظات" />
+      </div>
+      <button class="btn btn-primary" onclick="addRecord()">حفظ العملية في السجل</button>
+    </div>
+
+    <div class="card">
+      <h3>كشف حسابات المدينين والأرصدة المفصولة (الرصيد بالدينار العراقي | الرصيد بالدولار الأمريكي)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>اسم المدين</th>
+            <th>الهاتف</th>
+            <th>الرصيد بالدينار العراقي (IQD)</th>
+            <th>الرصيد بالدولار الأمريكي (USD)</th>
+            <th>المسدد (د.ع | $)</th>
+            <th>إجراء سريع</th>
+          </tr>
+        </thead>
+        <tbody id="debtorsTable"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <div id="clearanceModal" class="modal-backdrop">
+    <div class="modal">
+      <h2 style="color:var(--emerald);margin-bottom:8px;">إغلاق الذمة المالية وتصفير الحساب بالعملتين!</h2>
+      <p id="clearanceText" style="margin-bottom:16px;color:var(--muted);"></p>
+      <p style="font-weight:700;color:var(--primary);margin-bottom:16px;">صدقة جارية عن أحمد أبو رسلان</p>
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <button class="btn btn-emerald" onclick="window.print()">طباعة سند براءة ذمة PDF</button>
+        <button class="btn btn-outline" onclick="document.getElementById('clearanceModal').style.display='none'">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'sijil_alduyun_pwa_dual_currency_v2';
+    let db = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || {
+      debtors: [
+        { id: 1, name: 'شركة الرافدين للتجارة العامة والتوريدات', phone: '07701234567', debtIqd: 8500000, paidIqd: 3500000, debtUsd: 4200, paidUsd: 1700 },
+        { id: 2, name: 'حيدر عبد الكريم الكاظمي', phone: '07809876543', debtIqd: 3250000, paidIqd: 1000000, debtUsd: 950, paidUsd: 0 },
+        { id: 3, name: 'مصطفى محمود الدليمي', phone: '07711223344', debtIqd: 1750000, paidIqd: 1500000, debtUsd: 0, paidUsd: 0 }
+      ]
+    };
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+      render();
+    }
+
+    function render() {
+      let remIqdTotal = 0, paidIqdTotal = 0, remUsdTotal = 0, paidUsdTotal = 0, active = 0;
+      const rate = parseFloat(document.getElementById('rateInput').value) || 1500;
+      const tbody = document.getElementById('debtorsTable');
+      tbody.innerHTML = '';
+      db.debtors.forEach((d) => {
+        const remIqd = Math.max(0, (d.debtIqd || 0) - (d.paidIqd || 0));
+        const remUsd = Math.max(0, (d.debtUsd || 0) - (d.paidUsd || 0));
+        remIqdTotal += remIqd;
+        paidIqdTotal += (d.paidIqd || 0);
+        remUsdTotal += remUsd;
+        paidUsdTotal += (d.paidUsd || 0);
+        if (remIqd > 0 || remUsd > 0) active++;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${d.name}</strong></td>
+          <td>${d.phone || '-'}</td>
+          <td style="color:${remIqd > 0 ? 'var(--crimson)' : 'var(--emerald)'};font-weight:700;">${remIqd.toLocaleString()} د.ع</td>
+          <td style="color:${remUsd > 0 ? 'var(--crimson)' : 'var(--emerald)'};font-weight:700;">${remUsd.toLocaleString()} $</td>
+          <td style="color:var(--emerald)">${(d.paidIqd || 0).toLocaleString()} د.ع | ${(d.paidUsd || 0).toLocaleString()} $</td>
+          <td>
+            ${(remIqd > 0 || remUsd > 0) ? `<button class="btn btn-emerald" onclick="settleFull(${d.id})">تصفير الحساب</button>` : `<span style="color:var(--emerald);font-weight:700;">مسدد بالكامل ✓</span>`}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('kpiDebtIqd').textContent = remIqdTotal.toLocaleString() + ' د.ع';
+      document.getElementById('kpiDebtUsd').textContent = remUsdTotal.toLocaleString() + ' $';
+      document.getElementById('kpiPaidIqd').textContent = paidIqdTotal.toLocaleString() + ' د.ع';
+      document.getElementById('kpiPaidUsd').textContent = paidUsdTotal.toLocaleString() + ' $';
+      const unified = remIqdTotal + (remUsdTotal * rate);
+      document.getElementById('kpiUnified').textContent = unified.toLocaleString() + ' د.ع';
+      document.getElementById('kpiCount').textContent = active + ' عميل';
+    }
+
+    function addRecord() {
+      const name = document.getElementById('debtorName').value.trim();
+      const phone = document.getElementById('debtorPhone').value.trim();
+      const type = document.getElementById('txType').value;
+      const currency = document.getElementById('txCurrency').value;
+      const amount = parseFloat(document.getElementById('txAmount').value);
+      if (!name || isNaN(amount) || amount <= 0) return;
+      let d = db.debtors.find(x => x.name === name);
+      if (!d) {
+        d = { id: Date.now(), name, phone, debtIqd: 0, paidIqd: 0, debtUsd: 0, paidUsd: 0 };
+        db.debtors.push(d);
+      }
+      const prevActive = ((d.debtIqd - d.paidIqd) > 0) || ((d.debtUsd - d.paidUsd) > 0);
+      if (currency === 'USD') {
+        if (type === 'DEBT') d.debtUsd += amount; else d.paidUsd += amount;
+      } else {
+        if (type === 'DEBT') d.debtIqd += amount; else d.paidIqd += amount;
+      }
+      const nowActive = (Math.max(0, d.debtIqd - d.paidIqd) > 0) || (Math.max(0, d.debtUsd - d.paidUsd) > 0);
+      save();
+      if (type === 'PAYMENT' && prevActive && !nowActive) {
+        showClearance(d);
+      }
+    }
+
+    function settleFull(id) {
+      const d = db.debtors.find(x => x.id === id);
+      if (!d) return;
+      d.paidIqd = d.debtIqd;
+      d.paidUsd = d.debtUsd;
+      save();
+      showClearance(d);
+    }
+
+    function showClearance(d) {
+      document.getElementById('clearanceText').textContent =
+        `تم سداد كامل المستحقات على العميل «${d.name}» (${(d.paidIqd||0).toLocaleString()} د.ع | ${(d.paidUsd||0).toLocaleString()} $) وأصبح رصيده بالعملتين (0 د.ع | 0 $).`;
+      document.getElementById('clearanceModal').style.display = 'flex';
+    }
+
+    function exportCsv() {
+      let csv = '\uFEFFاسم المدين,الهاتف,إجمالي الدين (IQD),إجمالي المسدد (IQD),الرصيد المتبقي (IQD),إجمالي الدين (USD),إجمالي المسدد (USD),الرصيد المتبقي (USD)\n';
+      db.debtors.forEach(d => {
+        const rIqd = Math.max(0, (d.debtIqd||0) - (d.paidIqd||0));
+        const rUsd = Math.max(0, (d.debtUsd||0) - (d.paidUsd||0));
+        csv += `"${d.name}","${d.phone}",${d.debtIqd||0},${d.paidIqd||0},${rIqd},${d.debtUsd||0},${d.paidUsd||0},${rUsd}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'sijil_alduyun_iqd_usd_utf8bom.csv';
+      a.click();
+    }
+
+    function downloadBackup() {
+      const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'sijil_alduyun_backup.json';
+      a.click();
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+    render();
+  </script>
+</body>
+</html>

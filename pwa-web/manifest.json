@@ -1,0 +1,18 @@
+{
+  "name": "سجل الديون والمحاسبة - صدقة جارية عن أحمد أبو رسلان",
+  "short_name": "سجل الديون",
+  "description": "نظام محاسبي متكامل لإدارة سجل الديون، التسديدات، والتقارير المالية - صدقة جارية عن أحمد أبو رسلان",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "ar",
+  "background_color": "#0F172A",
+  "theme_color": "#2563EB",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230F172A'/><path d='M25 70V45h12v25H25zm19 0V28h12v42H44zm19 0V52h12v18H63z' fill='%2310B981'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}
