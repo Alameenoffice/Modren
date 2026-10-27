@@ -31,19 +31,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Normalize Gradle & AGP for Standard GitHub Runner (Gradle 8.10.2 / AGP 8.7.2 / SDK 35)
+      - name: Align Gradle Wrapper for AGP 8.7.2
         run: |
           if [ -f gradle/wrapper/gradle-wrapper.properties ]; then
             sed -i 's|gradle-.*-bin.zip|gradle-8.10.2-bin.zip|g' gradle/wrapper/gradle-wrapper.properties
           fi
-          sed -i 's/agp = ".*"/agp = "8.7.2"/g' gradle/libs.versions.toml
-          sed -i 's/kotlin = ".*"/kotlin = "2.0.21"/g' gradle/libs.versions.toml
-          sed -i 's/googleDevtoolsKsp = ".*"/googleDevtoolsKsp = "2.0.21-1.0.27"/g' gradle/libs.versions.toml
-          sed -i 's/coreKtx = ".*"/coreKtx = "1.15.0"/g' gradle/libs.versions.toml
-          sed -i 's/compileSdk { version = release(36) { minorApiLevel = 1 } }/compileSdk = 35/g' app/build.gradle.kts
-          sed -i 's/targetSdk = 36/targetSdk = 35/g' app/build.gradle.kts
-          sed -i 's/org.gradle.caching=true/org.gradle.caching=false/g' gradle.properties
-          sed -i 's/org.gradle.configuration-cache=true/org.gradle.configuration-cache=false/g' gradle.properties
 
       - name: Setup Gradle 8.10.2
         uses: gradle/actions/setup-gradle@v4
