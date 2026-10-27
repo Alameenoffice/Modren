@@ -25,10 +25,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
@@ -51,7 +52,6 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -76,6 +76,8 @@ import com.example.data.local.ClearanceEvent
 import com.example.data.local.CurrencyCode
 import com.example.data.local.DebtorEntity
 import com.example.data.local.DebtorSummary
+import com.example.data.local.LedgerTransactionEntity
+import com.example.data.local.PaymentReceiptEvent
 import com.example.data.local.TransactionType
 import com.example.ui.theme.LocalLedgerColors
 import com.example.util.ExportAndBackupManager
@@ -83,6 +85,7 @@ import com.example.util.Formatters
 
 @Composable
 fun ClearanceCelebrationDialog(
+    officeName: String,
     event: ClearanceEvent,
     onDismiss: () -> Unit
 ) {
@@ -144,7 +147,7 @@ fun ClearanceCelebrationDialog(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "سند براءة ذمة ومخالصة مالية رسمية • ${event.referenceNumber}",
+                            text = "$officeName • سند براءة ذمة ${event.referenceNumber}",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFFD1FAE5),
                             textAlign = TextAlign.Center
@@ -159,7 +162,7 @@ fun ClearanceCelebrationDialog(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "تم بحمد الله سداد كامل المبلغ المتبقي بالعملتين على العميل:",
+                        text = "تم سداد كامل المبلغ المتبقي بالعملتين على العميل:",
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.textSecondary,
                         textAlign = TextAlign.Center
@@ -242,7 +245,7 @@ fun ClearanceCelebrationDialog(
 
                     Spacer(modifier = Modifier.height(14.dp))
                     Text(
-                        text = "صدقة جارية عن أحمد أبو رسلان",
+                        text = "صادر عن: $officeName",
                         style = MaterialTheme.typography.labelLarge,
                         color = colors.primaryInteractive
                     )
@@ -251,7 +254,11 @@ fun ClearanceCelebrationDialog(
 
                     Button(
                         onClick = {
-                            ExportAndBackupManager.shareClearanceCertificate(context, event)
+                            ExportAndBackupManager.shareClearanceCertificate(
+                                context = context,
+                                officeName = officeName,
+                                event = event
+                            )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -263,7 +270,7 @@ fun ClearanceCelebrationDialog(
                         Icon(Icons.Default.Share, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "إصدار ومشاركة سند براءة ذمة (واتساب / PDF)",
+                            text = "إرسال سند براءة ذمة عبر واتساب مباشرة",
                             style = MaterialTheme.typography.titleSmall,
                             color = Color.White
                         )
@@ -273,7 +280,11 @@ fun ClearanceCelebrationDialog(
 
                     OutlinedButton(
                         onClick = {
-                            val pdf = ExportAndBackupManager.generateClearancePdfFile(context, event)
+                            val pdf = ExportAndBackupManager.generateClearancePdfFile(
+                                context = context,
+                                officeName = officeName,
+                                event = event
+                            )
                             ExportAndBackupManager.printPdfFile(
                                 context = context,
                                 pdfFile = pdf,
@@ -308,6 +319,123 @@ fun ClearanceCelebrationDialog(
                     ) {
                         Text("إغلاق النافذة", color = colors.textSecondary)
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PaymentReceiptDialog(
+    officeName: String,
+    receipt: PaymentReceiptEvent,
+    onDismiss: () -> Unit
+) {
+    val colors = LocalLedgerColors.current
+    val context = LocalContext.current
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("payment_receipt_modal"),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = colors.cardSurface),
+            border = BorderStroke(1.5.dp, colors.paymentEmerald)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(colors.paymentEmeraldSoft),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ReceiptLong,
+                        contentDescription = null,
+                        tint = colors.paymentEmerald,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "وصل قبض دفعة تسديد",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = colors.textPrimary
+                )
+                Text(
+                    text = "$officeName • رقم الوصل ${receipt.receiptNumber}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.primaryInteractive
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    color = colors.elevatedSurface,
+                    border = BorderStroke(1.dp, colors.subtleBorder)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CertificateRow(
+                            label = "العميل / المدين:",
+                            value = receipt.debtor.name,
+                            valueColor = colors.textPrimary
+                        )
+                        CertificateRow(
+                            label = "المبلغ المقبوض:",
+                            value = Formatters.formatByCurrency(receipt.paymentAmount, receipt.currency),
+                            valueColor = colors.paymentEmerald
+                        )
+                        CertificateRow(
+                            label = "الرصيد المتبقي بالدينار:",
+                            value = Formatters.formatIqd(receipt.remainingBalanceIqd),
+                            valueColor = if (receipt.remainingBalanceIqd > 0.009) colors.debtCrimson else colors.paymentEmerald
+                        )
+                        CertificateRow(
+                            label = "الرصيد المتبقي بالدولار:",
+                            value = Formatters.formatUsd(receipt.remainingBalanceUsd),
+                            valueColor = if (receipt.remainingBalanceUsd > 0.009) colors.debtCrimson else colors.paymentEmerald
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                Button(
+                    onClick = {
+                        ExportAndBackupManager.sendPaymentReceiptViaWhatsApp(
+                            context = context,
+                            officeName = officeName,
+                            receipt = receipt
+                        )
+                        onDismiss()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .testTag("send_whatsapp_receipt_button"),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.paymentEmerald)
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("إرسال وصل القبض عبر واتساب للعميل", color = Color.White)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TextButton(onClick = onDismiss) {
+                    Text("إغلاق", color = colors.textSecondary)
                 }
             }
         }
@@ -568,7 +696,7 @@ fun RecordTransactionDialog(
                         OutlinedTextField(
                             value = selectedSummary?.let {
                                 "${it.debtor.name} (${Formatters.formatIqd(it.currentBalanceIqd)} | ${Formatters.formatUsd(it.currentBalanceUsd)})"
-                            } ?: "اختر العميل / المدين",
+                            } ?: "اختر العميل / المدين (أضف مديناً أولاً إذا كانت القائمة فارغة)",
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("العميل / المدين") },
@@ -765,7 +893,7 @@ fun RecordTransactionDialog(
                             val debtorId = selectedSummary?.debtor?.id
                             val parsedAmount = amountText.replace(",", "").toDoubleOrNull()
                             if (debtorId == null) {
-                                errorMessage = "يرجى اختيار العميل أولاً"
+                                errorMessage = "يرجى إضافة أو اختيار عميل أولاً"
                                 return@Button
                             }
                             if (parsedAmount == null || parsedAmount <= 0.0) {
@@ -801,6 +929,160 @@ fun RecordTransactionDialog(
                             color = Color.White,
                             style = MaterialTheme.typography.titleSmall
                         )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EditTransactionDialog(
+    transaction: LedgerTransactionEntity,
+    onDismiss: () -> Unit,
+    onSave: (newType: String, newCurrency: String, newAmount: Double, newNote: String) -> Unit
+) {
+    val colors = LocalLedgerColors.current
+    var txType by remember { mutableStateOf(transaction.type) }
+    var txCurrency by remember { mutableStateOf(transaction.currency) }
+    var amountText by remember {
+        mutableStateOf(
+            if (transaction.currency == CurrencyCode.IQD) {
+                transaction.amount.toLong().toString()
+            } else {
+                transaction.amount.toString()
+            }
+        )
+    }
+    var noteText by remember { mutableStateOf(transaction.note) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("edit_transaction_dialog"),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = colors.cardSurface),
+            border = BorderStroke(1.dp, colors.subtleBorder)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = colors.primaryInteractive
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "تعديل العملية المالية المسجلة",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = colors.textPrimary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = txType == TransactionType.PAYMENT,
+                        onClick = { txType = TransactionType.PAYMENT },
+                        label = { Text("دفعة تسديد") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    FilterChip(
+                        selected = txType == TransactionType.DEBT,
+                        onClick = { txType = TransactionType.DEBT },
+                        label = { Text("إضافة دين") },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = txCurrency == CurrencyCode.IQD,
+                        onClick = { txCurrency = CurrencyCode.IQD },
+                        label = { Text("دينار عراقي (د.ع)") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    FilterChip(
+                        selected = txCurrency == CurrencyCode.USD,
+                        onClick = { txCurrency = CurrencyCode.USD },
+                        label = { Text("دولار أمريكي ($)") },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = {
+                        amountText = it
+                        errorMessage = null
+                    },
+                    label = { Text("المبلغ (${Formatters.currencyShortSymbol(txCurrency)})") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = noteText,
+                    onValueChange = { noteText = it },
+                    label = { Text("البيان / الملاحظات") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                if (errorMessage != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage!!,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.debtCrimson
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("إلغاء")
+                    }
+                    Button(
+                        onClick = {
+                            val parsed = amountText.replace(",", "").toDoubleOrNull()
+                            if (parsed == null || parsed <= 0.0) {
+                                errorMessage = "يرجى إدخال مبلغ صحيح أكبر من الصفر"
+                                return@Button
+                            }
+                            onSave(txType, txCurrency, parsed, noteText)
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1.2f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.primaryInteractive)
+                    ) {
+                        Text("حفظ التعديل", color = Color.White)
                     }
                 }
             }
@@ -853,7 +1135,9 @@ fun DebtorFormDialog(
     var initialDebtText by remember { mutableStateOf("") }
     var initialDebtCurrency by remember { mutableStateOf(CurrencyCode.IQD) }
     var initialDebtNote by remember { mutableStateOf("رصيد افتتاحي مسجل عند فتح الحساب") }
-    var dueDaysPreset by remember { mutableStateOf<Int?>(30) }
+    var dueDateInputText by remember {
+        mutableStateOf(Formatters.formatInputDate(existingDebtor?.dueDateMillis))
+    }
     var errorText by remember { mutableStateOf<String?>(null) }
 
     Dialog(
@@ -924,7 +1208,7 @@ fun DebtorFormDialog(
                     OutlinedTextField(
                         value = phone,
                         onValueChange = { phone = it },
-                        label = { Text("رقم الهاتف") },
+                        label = { Text("رقم الهاتف (لواتساب)") },
                         placeholder = { Text("077XXXXXXXX") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         singleLine = true,
@@ -981,7 +1265,7 @@ fun DebtorFormDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "تاريخ الاستحقاق المجدول:",
+                    text = "تاريخ استحقاق السداد (لتنبيهات التأخر عن السداد):",
                     style = MaterialTheme.typography.labelLarge,
                     color = colors.textSecondary
                 )
@@ -990,17 +1274,24 @@ fun DebtorFormDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    val dayMs = 24L * 60L * 60L * 1000L
                     val options = listOf(
                         7 to "بعد 7 أيام",
                         15 to "بعد 15 يوم",
                         30 to "بعد 30 يوم",
-                        -3 to "متأخر (تجربة تنبيه)",
+                        -2 to "متأخر (قبل يومين)",
                         null to "بدون تاريخ"
                     )
                     options.forEach { (days, label) ->
                         FilterChip(
-                            selected = dueDaysPreset == days,
-                            onClick = { dueDaysPreset = days },
+                            selected = false,
+                            onClick = {
+                                dueDateInputText = if (days == null) {
+                                    ""
+                                } else {
+                                    Formatters.formatInputDate(System.currentTimeMillis() + (days * dayMs))
+                                }
+                            },
                             label = { Text(label) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = colors.primaryInteractiveSoft,
@@ -1009,6 +1300,18 @@ fun DebtorFormDialog(
                         )
                     }
                 }
+                Spacer(modifier = Modifier.height(6.dp))
+                OutlinedTextField(
+                    value = dueDateInputText,
+                    onValueChange = { dueDateInputText = it },
+                    label = { Text("تاريخ الاستحقاق (YYYY-MM-DD)") },
+                    placeholder = { Text("مثال: 2026-11-15 أو اتركه فارغاً") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("debtor_due_date_input"),
+                    shape = RoundedCornerShape(12.dp)
+                )
 
                 if (!isEditing) {
                     Spacer(modifier = Modifier.height(12.dp))
@@ -1115,9 +1418,7 @@ fun DebtorFormDialog(
                             val limitIqd = creditLimitIqdText.replace(",", "").toDoubleOrNull() ?: 0.0
                             val limitUsd = creditLimitUsdText.replace(",", "").toDoubleOrNull() ?: 0.0
                             val initDebt = initialDebtText.replace(",", "").toDoubleOrNull() ?: 0.0
-                            val dueMillis = dueDaysPreset?.let {
-                                System.currentTimeMillis() + (it * 24L * 60L * 60L * 1000L)
-                            } ?: existingDebtor?.dueDateMillis
+                            val dueMillis = Formatters.parseInputDateToMillis(dueDateInputText)
 
                             onSave(
                                 existingDebtor?.id,
@@ -1146,110 +1447,6 @@ fun DebtorFormDialog(
                             color = Color.White,
                             style = MaterialTheme.typography.titleSmall
                         )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ExchangeRateSettingsDialog(
-    currentRate: Double,
-    showUnifiedEstimate: Boolean,
-    onDismiss: () -> Unit,
-    onSave: (rate: Double, showUnified: Boolean) -> Unit
-) {
-    val colors = LocalLedgerColors.current
-    var rateText by remember { mutableStateOf(currentRate.toLong().toString()) }
-    var showUnified by remember { mutableStateOf(showUnifiedEstimate) }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("exchange_rate_settings_dialog"),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = colors.cardSurface),
-            border = BorderStroke(1.dp, colors.subtleBorder)
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.CurrencyExchange,
-                        contentDescription = null,
-                        tint = colors.primaryInteractive
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "إعدادات سعر الصرف التقريبي",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = colors.textPrimary
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "تبقى كافة السجلات والحسابات الأساسية مفصولة تماماً (IQD | USD)، ويُستخدم سعر الصرف فقط لعرض إجمالي تقديري موحد اختياري في لوحة التحكم.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.textSecondary
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                OutlinedTextField(
-                    value = rateText,
-                    onValueChange = { rateText = it },
-                    label = { Text("سعر صرف 1 دولار أمريكي ($) مقابل الدينار (د.ع)") },
-                    placeholder = { Text("مثال: 1500") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "إظهار الإجمالي التقديري الموحد بلوحة التحكم",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.textPrimary,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Switch(
-                        checked = showUnified,
-                        onCheckedChange = { showUnified = it }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("إلغاء")
-                    }
-                    Button(
-                        onClick = {
-                            val parsed = rateText.replace(",", "").toDoubleOrNull() ?: 1500.0
-                            onSave(parsed, showUnified)
-                            onDismiss()
-                        },
-                        modifier = Modifier.weight(1.2f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = colors.primaryInteractive)
-                    ) {
-                        Text("حفظ الإعدادات", color = Color.White)
                     }
                 }
             }

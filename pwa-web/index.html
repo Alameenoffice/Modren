@@ -2,256 +2,920 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>سجل الديون والمحاسبة (IQD | USD) | صدقة جارية عن أحمد أبو رسلان</title>
-  <link rel="manifest" href="./manifest.json" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0F172A" />
+  <title>سجل الديون | نظام المحاسبة والعملات المزدوج (IQD & USD)</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #F8FAFC;
       --surface: #FFFFFF;
+      --surface-elevated: #F1F5F9;
       --sidebar: #0F172A;
-      --text: #0F172A;
-      --muted: #64748B;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #64748B;
       --border: #E2E8F0;
       --primary: #2563EB;
+      --primary-soft: #DBEAFE;
       --emerald: #10B981;
+      --emerald-soft: #D1FAE5;
       --crimson: #EF4444;
+      --crimson-soft: #FEE2E2;
+      --amber: #F59E0B;
+      --amber-soft: #FEF3C7;
+      --shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
     }
-    body.dark {
+    [data-theme="dark"] {
       --bg: #0B1120;
-      --surface: #1E293B;
-      --text: #F8FAFC;
-      --muted: #94A3B8;
-      --border: #334155;
+      --surface: #0F172A;
+      --surface-elevated: #1E293B;
+      --sidebar: #090E1A;
+      --text-primary: #F8FAFC;
+      --text-secondary: #CBD5E1;
+      --text-muted: #94A3B8;
+      --border: #1E293B;
+      --primary: #3B82F6;
+      --primary-soft: #1E3A8A;
+      --emerald: #10B981;
+      --emerald-soft: #064E3B;
+      --crimson: #F87171;
+      --crimson-soft: #7F1D1D;
+      --amber: #FBBF24;
+      --amber-soft: #78350F;
     }
-    * { box-sizing: border-box; font-family: 'Cairo', sans-serif; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
-    .dedication-bar { background: #0F172A; color: #6EE7B7; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 0.9rem; border-bottom: 1px solid #1E293B; }
-    .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-    .container { max-width: 1200px; width: 100%; margin: 20px auto; padding: 0 16px; flex: 1; }
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: 0 2px 8px rgba(15,23,42,0.04); margin-bottom: 16px; }
-    .btn { border: none; border-radius: 10px; padding: 10px 16px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: 0.15s; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+    body { background: var(--bg); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
+    .office-top-ribbon {
+      background: #0F172A; color: #6EE7B7; padding: 8px 18px; font-size: 0.88rem; font-weight: 700;
+      display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer;
+    }
+    .app-shell { display: flex; flex: 1; min-height: calc(100vh - 38px); }
+    .sidebar {
+      width: 260px; background: var(--sidebar); color: #fff; padding: 20px 14px;
+      display: flex; flex-direction: column; justify-content: space-between; transition: width 0.25s;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin-bottom: 20px; }
+    .brand-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--primary); display: grid; place-items: center; font-weight: 700; flex-shrink: 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px;
+      color: #CBD5E1; cursor: pointer; font-weight: 600; margin-bottom: 6px; border: none; background: transparent; width: 100%; text-align: right; font-size: 0.95rem;
+    }
+    .nav-item.active, .nav-item:hover { background: var(--primary); color: #fff; }
+    .main-area { flex: 1; display: flex; flex-direction: column; overflow-x: hidden; }
+    .topbar {
+      background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 22px;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .btn {
+      padding: 8px 15px; border-radius: 10px; font-weight: 600; cursor: pointer; border: 1px solid transparent;
+      display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; transition: 0.15s;
+    }
     .btn-primary { background: var(--primary); color: #fff; }
     .btn-emerald { background: var(--emerald); color: #fff; }
     .btn-crimson { background: var(--crimson); color: #fff; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline { background: transparent; border-color: var(--border); color: var(--text-primary); }
+    .btn-sm { padding: 5px 10px; font-size: 0.8rem; border-radius: 8px; }
+    .content { padding: 22px; max-width: 1380px; width: 100%; margin: 0 auto; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 22px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 18px; box-shadow: var(--shadow);
+    }
+    .badge { padding: 4px 10px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; display: inline-block; }
+    .badge-iqd { background: var(--primary-soft); color: var(--primary); }
+    .badge-usd { background: var(--emerald-soft); color: var(--emerald); }
+    .badge-crimson { background: var(--crimson-soft); color: var(--crimson); }
+    .badge-amber { background: var(--amber-soft); color: var(--amber); }
     table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { padding: 12px; border-bottom: 1px solid var(--border); text-align: right; font-size: 0.92rem; }
-    input, select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); margin-bottom: 10px; }
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,0.65); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
-    .modal { background: var(--surface); border-radius: 18px; max-width: 520px; width: 100%; padding: 24px; border: 2px solid var(--emerald); text-align: center; }
+    th, td { padding: 11px 12px; border-bottom: 1px solid var(--border); text-align: right; font-size: 0.9rem; }
+    th { background: var(--surface-elevated); color: var(--text-secondary); font-weight: 700; }
+    input, select {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-primary); margin-top: 4px; margin-bottom: 10px;
+    }
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.72); display: none;
+      place-items: center; z-index: 1000; padding: 16px;
+    }
+    .modal-backdrop.open { display: grid; }
+    .modal { background: var(--surface); border-radius: 20px; max-width: 520px; width: 100%; padding: 22px; border: 1px solid var(--border); max-height: 92vh; overflow-y: auto; }
+    .empty-box {
+      text-align: center; padding: 38px 20px; border: 2px dashed var(--border); border-radius: 18px;
+      background: var(--surface); margin: 16px 0;
+    }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .mobile-nav {
+        display: flex !important; position: fixed; bottom: 0; right: 0; left: 0;
+        background: var(--surface); border-top: 1px solid var(--border); padding: 8px; justify-content: space-around; z-index: 90;
+      }
+      body { padding-bottom: 66px; }
+    }
+    .mobile-nav { display: none; }
+    @media print {
+      .sidebar, .topbar, .mobile-nav, .no-print { display: none !important; }
+      .content { padding: 0; }
+      .card { box-shadow: none; border: 1px solid #cbd5e1; }
+    }
   </style>
 </head>
 <body>
-  <div class="dedication-bar">
-    <span>صدقة جارية عن أحمد أبو رسلان</span>
-    <span>نظام العملات المزدوج (دينار عراقي د.ع IQD | دولار أمريكي $ USD)</span>
+  <div class="office-top-ribbon" onclick="openOfficeSettingsModal()" title="اضغط لتعديل اسم المكتب وسعر الصرف">
+    <span>🏢 <span id="ribbonOfficeName">مكتب المحاسبة والتجارة العامة</span> ✎</span>
+    <span id="topRibbonSummary">IQD 0 | USD 0</span>
   </div>
-  <header class="header">
-    <div>
-      <h2 style="font-size:1.25rem;">نظام سجل الديون والتقارير المالية (IQD | USD)</h2>
-    </div>
-    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-      <span style="font-size:0.85rem;color:var(--muted);">سعر الصرف التقريبي (1$):</span>
-      <input id="rateInput" type="number" value="1500" style="width:95px;margin:0;padding:6px 8px;" onchange="render()" />
-      <button class="btn btn-outline" onclick="document.body.classList.toggle('dark')">الوضع الليلي</button>
-      <button class="btn btn-emerald" onclick="exportCsv()">تصدير Excel CSV</button>
-      <button class="btn btn-primary" onclick="downloadBackup()">نسخة احتياطية JSON</button>
-    </div>
-  </header>
 
-  <main class="container">
-    <div class="kpi-grid">
-      <div class="card">
-        <div style="color:var(--muted);font-size:0.85rem;">إجمالي الديون المستحقة (د.ع | $)</div>
-        <div id="kpiDebtIqd" style="font-size:1.35rem;font-weight:700;color:var(--crimson);margin-top:6px;">0 د.ع</div>
-        <div id="kpiDebtUsd" style="font-size:1.15rem;font-weight:700;color:var(--primary);margin-top:2px;">0 $</div>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <div class="brand-icon">د/$</div>
+          <div>
+            <div id="sidebarOfficeName" style="font-weight:700;font-size:1.02rem">مكتب المحاسبة والتجارة العامة</div>
+            <div style="font-size:0.74rem;color:#6EE7B7">سجل الديون والمحاسبة (IQD | USD)</div>
+          </div>
+        </div>
+        <button class="nav-item active" onclick="switchTab('dashboard', this)">📊 لوحة التحكم</button>
+        <button class="nav-item" onclick="switchTab('debtors', this)">👥 سجل المدينين</button>
+        <button class="nav-item" onclick="switchTab('reports', this)">📑 التقارير والجرد</button>
+        <button class="nav-item" onclick="switchTab('backup', this)">⚙️ الإعدادات والنسخ</button>
       </div>
-      <div class="card">
-        <div style="color:var(--muted);font-size:0.85rem;">إجمالي التسديدات المحصلة (د.ع | $)</div>
-        <div id="kpiPaidIqd" style="font-size:1.35rem;font-weight:700;color:var(--emerald);margin-top:6px;">0 د.ع</div>
-        <div id="kpiPaidUsd" style="font-size:1.15rem;font-weight:700;color:var(--emerald);margin-top:2px;">0 $</div>
+      <div style="background:rgba(255,255,255,0.06);padding:12px;border-radius:12px;text-align:center;font-size:0.8rem;cursor:pointer" onclick="openOfficeSettingsModal()">
+        <div id="sidebarFooterOffice" style="color:#6EE7B7;font-weight:700">مكتب المحاسبة والتجارة العامة</div>
+        <div style="color:#94A3B8;margin-top:4px">تخزين محلي آمن 100% (Offline-First)</div>
       </div>
-      <div class="card">
-        <div style="color:var(--muted);font-size:0.85rem;">الإجمالي التقديري الموحد (بسعر الصرف)</div>
-        <div id="kpiUnified" style="font-size:1.3rem;font-weight:700;color:var(--primary);margin-top:6px;">0 د.ع</div>
-        <div style="color:var(--muted);font-size:0.78rem;margin-top:4px;">مع بقاء السجلات الأساسية مفصولة تماماً</div>
-      </div>
-      <div class="card">
-        <div style="color:var(--muted);font-size:0.85rem;">المدينون النشطون</div>
-        <div id="kpiCount" style="font-size:1.5rem;font-weight:700;margin-top:6px;">0</div>
-      </div>
-    </div>
+    </aside>
 
-    <div class="card">
-      <h3 style="margin-bottom:12px;">تسجيل عملية مالية جديدة (IQD أو USD)</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;">
-        <input id="debtorName" placeholder="اسم المدين / الشركة" />
-        <input id="debtorPhone" placeholder="رقم الهاتف" />
-        <select id="txType">
-          <option value="PAYMENT">دفعة تسديد</option>
-          <option value="DEBT">إضافة دين جديد</option>
-        </select>
-        <select id="txCurrency">
-          <option value="IQD">دينار عراقي (د.ع / IQD)</option>
-          <option value="USD">دولار أمريكي ($ / USD)</option>
-        </select>
-        <input id="txAmount" type="number" placeholder="المبلغ" />
-        <input id="txNote" placeholder="البيان / الملاحظات" />
-      </div>
-      <button class="btn btn-primary" onclick="addRecord()">حفظ العملية في السجل</button>
-    </div>
+    <div class="main-area">
+      <header class="topbar">
+        <div>
+          <h2 id="headerOfficeTitle" style="font-size:1.18rem">مكتب المحاسبة والتجارة العامة</h2>
+          <p style="font-size:0.78rem;color:var(--text-muted)">نظام العملات المزدوج المستقل (د.ع IQD | $ USD) • سعر الصرف: <span id="headerExchangeRate">1,500</span> د.ع</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" class="no-print">
+          <button class="btn btn-outline" onclick="openOfficeSettingsModal()">🏢 اسم المكتب والصرف</button>
+          <button class="btn btn-outline" onclick="toggleTheme()">🌓 الوضع الليلي</button>
+          <button class="btn btn-outline" onclick="openDebtorModal()">+ مدين جديد</button>
+          <button class="btn btn-primary" onclick="openTxModal()">+ عملية مالية</button>
+        </div>
+      </header>
 
-    <div class="card">
-      <h3>كشف حسابات المدينين والأرصدة المفصولة (الرصيد بالدينار العراقي | الرصيد بالدولار الأمريكي)</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>اسم المدين</th>
-            <th>الهاتف</th>
-            <th>الرصيد بالدينار العراقي (IQD)</th>
-            <th>الرصيد بالدولار الأمريكي (USD)</th>
-            <th>المسدد (د.ع | $)</th>
-            <th>إجراء سريع</th>
-          </tr>
-        </thead>
-        <tbody id="debtorsTable"></tbody>
-      </table>
-    </div>
-  </main>
+      <main class="content">
+        <!-- DASHBOARD -->
+        <section id="tab-dashboard">
+          <div class="kpi-grid" id="kpiContainer"></div>
+          <div id="dashboardEmptyState"></div>
+          <div class="card" id="dashboardRecentSection">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+              <h3>أحدث الحركات المالية المسجلة (IQD & USD)</h3>
+              <span class="badge badge-usd">حفظ تلقائي فوري في LocalStorage</span>
+            </div>
+            <table>
+              <thead>
+                <tr><th>التاريخ</th><th>العميل</th><th>النوع</th><th>العملة</th><th>المبلغ</th><th>البيان</th><th class="no-print">إجراءات</th></tr>
+              </thead>
+              <tbody id="recentTxTable"></tbody>
+            </table>
+          </div>
+        </section>
 
-  <div id="clearanceModal" class="modal-backdrop">
+        <!-- DEBTORS -->
+        <section id="tab-debtors" style="display:none">
+          <div class="card" style="margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+              <input type="text" id="searchDebtor" placeholder="ابحث باسم المدين أو الهاتف أو العنوان..." oninput="renderAll()" style="max-width:380px;margin:0" />
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-emerald" onclick="exportDebtorsCsv()">تصدير Excel (CSV UTF-8-BOM)</button>
+                <button class="btn btn-primary" onclick="window.print()">طباعة / حفظ PDF</button>
+              </div>
+            </div>
+          </div>
+          <div id="debtorsListContainer" class="kpi-grid"></div>
+        </section>
+
+        <!-- REPORTS -->
+        <section id="tab-reports" style="display:none">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+              <h3>كشف الجرد الشامل والتقارير المالية (<span id="reportOfficeTitle"></span>)</h3>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-emerald" onclick="exportTransactionsCsv()">تصدير الحركات Excel CSV</button>
+                <button class="btn btn-primary" onclick="window.print()">طباعة التقرير PDF</button>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr><th>التاريخ والوقت</th><th>اسم العميل</th><th>العملية</th><th>العملة</th><th>المبلغ</th><th>البيان</th><th class="no-print">تعديل / حذف</th></tr>
+              </thead>
+              <tbody id="allReportsTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- SETTINGS & BACKUP -->
+        <section id="tab-backup" style="display:none">
+          <div class="card" style="margin-bottom:16px;border-color:var(--primary)">
+            <h3>🏢 إعدادات اسم المكتب وسعر الصرف والحماية</h3>
+            <p style="color:var(--text-secondary);margin:6px 0 14px">يظهر اسم المكتب في الترويسة العلوية، القائمة الجانبية، التقارير المطبوعة، ورسائل ومطالبات واتساب.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="openOfficeSettingsModal()">تعديل اسم المكتب أو سعر الصرف</button>
+              <button class="btn btn-outline" onclick="openPinModal()">🔒 إعداد رمز القفل (PIN من 4 أرقام)</button>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:16px">
+            <h3>💾 النسخ الاحتياطي الشامل والاستعادة (JSON)</h3>
+            <p style="color:var(--text-secondary);margin:6px 0 14px">احتفظ بنسخة كاملة من قاعدة البيانات (المدينون والحركات بالدينار والدولار) على جهازك واستعدها في أي وقت.</p>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <button class="btn btn-emerald" onclick="downloadJsonBackup()">تنزيل نسخة احتياطية كاملة (JSON)</button>
+              <label class="btn btn-outline" style="cursor:pointer">
+                استعادة البيانات من ملف JSON
+                <input type="file" accept=".json" style="display:none" onchange="restoreJsonBackup(event)" />
+              </label>
+            </div>
+          </div>
+
+          <div class="card" style="border-color:var(--crimson)">
+            <h3 style="color:var(--crimson)">⚠️ تصفير ومسح جميع بيانات التطبيق</h3>
+            <p style="color:var(--text-secondary);margin:6px 0 14px">حذف جميع المدينين والعمليات المسجلة نهائياً والبدء بسجل محاسبي جديد وفارغ تماماً.</p>
+            <button class="btn btn-crimson" onclick="openResetAllModal()">تصفير ومسح جميع بيانات التطبيق</button>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <nav class="mobile-nav no-print">
+    <button class="btn btn-outline" onclick="switchTab('dashboard', this)">الرئيسية</button>
+    <button class="btn btn-outline" onclick="switchTab('debtors', this)">المدينون</button>
+    <button class="btn btn-outline" onclick="switchTab('reports', this)">التقارير</button>
+    <button class="btn btn-outline" onclick="switchTab('backup', this)">الإعدادات</button>
+  </nav>
+
+  <!-- First-Time Onboarding Modal -->
+  <div class="modal-backdrop" id="onboardingModal">
     <div class="modal">
-      <h2 style="color:var(--emerald);margin-bottom:8px;">إغلاق الذمة المالية وتصفير الحساب بالعملتين!</h2>
-      <p id="clearanceText" style="margin-bottom:16px;color:var(--muted);"></p>
-      <p style="font-weight:700;color:var(--primary);margin-bottom:16px;">صدقة جارية عن أحمد أبو رسلان</p>
-      <div style="display:flex;gap:8px;justify-content:center;">
-        <button class="btn btn-emerald" onclick="window.print()">طباعة سند براءة ذمة PDF</button>
-        <button class="btn btn-outline" onclick="document.getElementById('clearanceModal').style.display='none'">إغلاق</button>
+      <h3 style="margin-bottom:6px;color:var(--primary)">👋 مرحباً بك في نظام سجل الديون</h3>
+      <p style="font-size:0.86rem;color:var(--text-secondary);margin-bottom:14px">إعداد أولي لمرة واحدة: أدخل اسم مكتبك أو شركتك وسعر صرف الدولار ليتم اعتمادها في الترويسة والتقارير والوصولات.</p>
+      <label>اسم المكتب أو الشركة أو التاجر</label>
+      <input type="text" id="onboardOfficeName" placeholder="مثال: مكتب النور للتجارة العامة" />
+      <label>سعر صرف الدولار مقابل الدينار (1 USD = ? IQD)</label>
+      <input type="number" id="onboardExchangeRate" value="1500" />
+      <label>رمز حماية اختياري (PIN من 4 أرقام - اتركه فارغاً لعدم التفعيل)</label>
+      <input type="password" id="onboardPin" maxlength="4" placeholder="مثال: 1234" />
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="saveOnboardingSetup()">حفظ الإعدادات والبدء</button>
+    </div>
+  </div>
+
+  <!-- Office & Exchange Rate Modal -->
+  <div class="modal-backdrop" id="officeSettingsModal">
+    <div class="modal">
+      <h3 style="margin-bottom:12px">تعديل اسم المكتب وسعر الصرف</h3>
+      <label>اسم المكتب أو الشركة أو التاجر</label>
+      <input type="text" id="editOfficeNameInput" />
+      <label>سعر صرف الدولار مقابل الدينار (1 USD = ? IQD)</label>
+      <input type="number" id="editExchangeRateInput" />
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+        <button class="btn btn-outline" onclick="closeModals()">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveOfficeSettings()">حفظ التعديلات</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIN Lock Setup Modal -->
+  <div class="modal-backdrop" id="pinSetupModal">
+    <div class="modal">
+      <h3 style="margin-bottom:10px">🔒 إعداد رمز القفل (PIN من 4 أرقام)</h3>
+      <label>أدخل رمز PIN من 4 أرقام (أو اتركه فارغاً لإلغاء القفل)</label>
+      <input type="password" id="pinSetupInput" maxlength="4" placeholder="4 أرقام" />
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+        <button class="btn btn-outline" onclick="closeModals()">إلغاء</button>
+        <button class="btn btn-primary" onclick="savePinSetup()">حفظ الرمز</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIN Lock Screen Overlay -->
+  <div class="modal-backdrop" id="pinLockOverlay" style="background:rgba(15,23,42,0.96);z-index:2000">
+    <div class="modal" style="text-align:center;max-width:380px">
+      <h3 id="lockOfficeTitle" style="color:var(--emerald);margin-bottom:6px"></h3>
+      <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:14px">التطبيق محمي برمز مرور (PIN من 4 أرقام)</p>
+      <input type="password" id="unlockPinInput" maxlength="4" placeholder="••••" style="text-align:center;font-size:1.4rem;letter-spacing:8px" />
+      <div id="pinErrorMsg" style="color:var(--crimson);font-size:0.82rem;margin-bottom:8px;display:none">رمز المرور غير صحيح!</div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="verifyPinUnlock()">فتح القفل</button>
+    </div>
+  </div>
+
+  <!-- New/Edit Debtor Modal -->
+  <div class="modal-backdrop" id="debtorModal">
+    <div class="modal">
+      <h3 style="margin-bottom:12px">إضافة مدين / عميل جديد</h3>
+      <label>اسم العميل الكامل</label>
+      <input type="text" id="debtorName" placeholder="مثال: شركة الرافدين للتجارة" />
+      <label>رقم الهاتف (لواتساب والتواصل)</label>
+      <input type="text" id="debtorPhone" placeholder="0770xxxxxxx" />
+      <label>العنوان</label>
+      <input type="text" id="debtorAddress" placeholder="بغداد - الكرادة" />
+      <label>تاريخ استحقاق السداد (اختياري للتنبيه عند التأخر)</label>
+      <input type="date" id="debtorDueDate" />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label>سقف الائتمان (د.ع IQD)</label>
+          <input type="number" id="debtorLimitIqd" value="0" />
+        </div>
+        <div>
+          <label>سقف الائتمان ($ USD)</label>
+          <input type="number" id="debtorLimitUsd" value="0" />
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+        <button class="btn btn-outline" onclick="closeModals()">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveDebtor()">حفظ المدين</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New/Edit Transaction Modal -->
+  <div class="modal-backdrop" id="txModal">
+    <div class="modal">
+      <h3 id="txModalTitle" style="margin-bottom:12px">تسجيل عملية مالية جديدة</h3>
+      <input type="hidden" id="editingTxId" value="" />
+      <label>اختر العميل</label>
+      <select id="txDebtorId"></select>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label>نوع العملية</label>
+          <select id="txType">
+            <option value="PAYMENT">تسديد دفعة (-)</option>
+            <option value="DEBT">إضافة دين (+)</option>
+          </select>
+        </div>
+        <div>
+          <label>العملة</label>
+          <select id="txCurrency">
+            <option value="IQD">دينار عراقي (د.ع IQD)</option>
+            <option value="USD">دولار أمريكي ($ USD)</option>
+          </select>
+        </div>
+      </div>
+      <label>المبلغ</label>
+      <input type="number" id="txAmount" placeholder="0" />
+      <label>البيان / الملاحظات</label>
+      <input type="text" id="txNote" placeholder="تفاصيل الفاتورة أو وصل القبض" />
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+        <button class="btn btn-outline" onclick="closeModals()">إلغاء</button>
+        <button class="btn btn-emerald" onclick="saveTransaction()">حفظ العملية</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Debtor Confirmation Modal -->
+  <div class="modal-backdrop" id="deleteDebtorConfirmModal">
+    <div class="modal">
+      <h3 style="color:var(--crimson);margin-bottom:10px">⚠️ تأكيد حذف المدين</h3>
+      <p id="deleteDebtorNamePrompt" style="margin-bottom:10px;font-weight:600"></p>
+      <div id="deleteDebtorUnpaidWarning" style="background:var(--crimson-soft);color:var(--crimson);padding:12px;border-radius:12px;margin-bottom:12px;font-weight:700;display:none"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="closeModals()">إلغاء</button>
+        <button class="btn btn-crimson" onclick="confirmDeleteDebtorNow()">حذف المدين نهائياً</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Receipt WhatsApp Modal -->
+  <div class="modal-backdrop" id="paymentReceiptModal">
+    <div class="modal" style="text-align:center">
+      <h3 style="color:var(--emerald);margin-bottom:6px">✅ تم تسجيل الدفعة بنجاح</h3>
+      <p id="receiptSummaryText" style="color:var(--text-secondary);margin-bottom:14px;font-size:0.9rem"></p>
+      <button class="btn btn-emerald" style="width:100%;justify-content:center;margin-bottom:8px" id="receiptWhatsappBtn">📲 إرسال وصل القبض عبر واتساب</button>
+      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="closeModals()">إغلاق</button>
+    </div>
+  </div>
+
+  <!-- Factory Reset Confirmation Modal -->
+  <div class="modal-backdrop" id="resetAllConfirmModal">
+    <div class="modal">
+      <h3 style="color:var(--crimson);margin-bottom:10px">⚠️ تأكيد تصفير ومسح جميع البيانات</h3>
+      <p style="color:var(--text-secondary);margin-bottom:14px">هل أنت متأكد من مسح جميع المدينين والعمليات المسجلة نهائياً والبدء بسجل جديد وفارغ تماماً؟ لا يمكن التراجع عن هذه الخطوة.</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="closeModals()">إلغاء</button>
+        <button class="btn btn-crimson" onclick="confirmResetAllDataNow()">نعم، تصفير ومسح الكل</button>
       </div>
     </div>
   </div>
 
   <script>
-    const STORAGE_KEY = 'sijil_alduyun_pwa_dual_currency_v2';
-    let db = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || {
-      debtors: [
-        { id: 1, name: 'شركة الرافدين للتجارة العامة والتوريدات', phone: '07701234567', debtIqd: 8500000, paidIqd: 3500000, debtUsd: 4200, paidUsd: 1700 },
-        { id: 2, name: 'حيدر عبد الكريم الكاظمي', phone: '07809876543', debtIqd: 3250000, paidIqd: 1000000, debtUsd: 950, paidUsd: 0 },
-        { id: 3, name: 'مصطفى محمود الدليمي', phone: '07711223344', debtIqd: 1750000, paidIqd: 1500000, debtUsd: 0, paidUsd: 0 }
-      ]
+    const STORAGE_KEY = 'debt_ledger_clean_pwa_v3';
+    const SETTINGS_KEY = 'debt_ledger_settings_pwa_v3';
+
+    let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null') || {
+      onboarded: false,
+      officeName: 'مكتب المحاسبة والتجارة العامة',
+      exchangeRate: 1500,
+      pinCode: ''
     };
 
-    function save() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-      render();
+    // Clean initial state with zero mock data
+    let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || {
+      debtors: [],
+      transactions: []
+    };
+
+    let pendingDeleteDebtorId = null;
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      renderAll();
     }
 
-    function render() {
-      let remIqdTotal = 0, paidIqdTotal = 0, remUsdTotal = 0, paidUsdTotal = 0, active = 0;
-      const rate = parseFloat(document.getElementById('rateInput').value) || 1500;
-      const tbody = document.getElementById('debtorsTable');
-      tbody.innerHTML = '';
-      db.debtors.forEach((d) => {
-        const remIqd = Math.max(0, (d.debtIqd || 0) - (d.paidIqd || 0));
-        const remUsd = Math.max(0, (d.debtUsd || 0) - (d.paidUsd || 0));
-        remIqdTotal += remIqd;
-        paidIqdTotal += (d.paidIqd || 0);
-        remUsdTotal += remUsd;
-        paidUsdTotal += (d.paidUsd || 0);
-        if (remIqd > 0 || remUsd > 0) active++;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><strong>${d.name}</strong></td>
-          <td>${d.phone || '-'}</td>
-          <td style="color:${remIqd > 0 ? 'var(--crimson)' : 'var(--emerald)'};font-weight:700;">${remIqd.toLocaleString()} د.ع</td>
-          <td style="color:${remUsd > 0 ? 'var(--crimson)' : 'var(--emerald)'};font-weight:700;">${remUsd.toLocaleString()} $</td>
-          <td style="color:var(--emerald)">${(d.paidIqd || 0).toLocaleString()} د.ع | ${(d.paidUsd || 0).toLocaleString()} $</td>
-          <td>
-            ${(remIqd > 0 || remUsd > 0) ? `<button class="btn btn-emerald" onclick="settleFull(${d.id})">تصفير الحساب</button>` : `<span style="color:var(--emerald);font-weight:700;">مسدد بالكامل ✓</span>`}
-          </td>
-        `;
-        tbody.appendChild(tr);
+    function fmtIqd(n) { return Math.round(n || 0).toLocaleString('en-US') + ' د.ع'; }
+    function fmtUsd(n) { return (Number(n || 0)).toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' $'; }
+
+    function normalizeWhatsAppPhone(phone) {
+      let digits = (phone || '').replace(/\D/g, '');
+      if (digits.startsWith('00')) digits = digits.slice(2);
+      else if (digits.startsWith('07') && digits.length === 11) digits = '964' + digits.slice(1);
+      else if (digits.startsWith('0')) digits = digits.slice(1);
+      return digits;
+    }
+
+    function calcDebtorSummary(d) {
+      const txs = state.transactions.filter(t => t.debtorId === d.id);
+      let debtIqd = 0, payIqd = 0, debtUsd = 0, payUsd = 0;
+      txs.forEach(t => {
+        if (t.currency === 'USD') {
+          if (t.type === 'DEBT') debtUsd += t.amount; else payUsd += t.amount;
+        } else {
+          if (t.type === 'DEBT') debtIqd += t.amount; else payIqd += t.amount;
+        }
       });
-      document.getElementById('kpiDebtIqd').textContent = remIqdTotal.toLocaleString() + ' د.ع';
-      document.getElementById('kpiDebtUsd').textContent = remUsdTotal.toLocaleString() + ' $';
-      document.getElementById('kpiPaidIqd').textContent = paidIqdTotal.toLocaleString() + ' د.ع';
-      document.getElementById('kpiPaidUsd').textContent = paidUsdTotal.toLocaleString() + ' $';
-      const unified = remIqdTotal + (remUsdTotal * rate);
-      document.getElementById('kpiUnified').textContent = unified.toLocaleString() + ' د.ع';
-      document.getElementById('kpiCount').textContent = active + ' عميل';
+      const balIqd = Math.max(0, debtIqd - payIqd);
+      const balUsd = Math.max(0, debtUsd - payUsd);
+      const isSettled = (debtIqd > 0 || debtUsd > 0) && balIqd === 0 && balUsd === 0;
+      const isOverdue = !isSettled && (balIqd > 0 || balUsd > 0) && d.dueDate && (new Date(d.dueDate).getTime() < Date.now());
+      return { debtor: d, debtIqd, payIqd, balIqd, debtUsd, payUsd, balUsd, isSettled, isOverdue };
     }
 
-    function addRecord() {
+    function formatDualBalance(balIqd, balUsd) {
+      if (balIqd > 0 && balUsd > 0) return `${fmtIqd(balIqd)} و ${fmtUsd(balUsd)}`;
+      if (balIqd > 0) return fmtIqd(balIqd);
+      if (balUsd > 0) return fmtUsd(balUsd);
+      return '0 د.ع | 0 $';
+    }
+
+    function sendDebtReminderWhatsApp(debtorId) {
+      const d = state.debtors.find(x => x.id === debtorId);
+      if (!d) return;
+      const s = calcDebtorSummary(d);
+      const msg = `تحية طيبة من (${settings.officeName})\nالأخ المحترم: ${d.name}\nنود تذكيركم بالرصيد المستحق بذمتكم:\n• بالدينار العراقي: ${fmtIqd(s.balIqd)}\n• بالدولار الأمريكي: ${fmtUsd(s.balUsd)}\nالتاريخ: ${new Date().toLocaleDateString('ar-IQ')}\nشاكرين تعاونكم معنا.`;
+      const phone = normalizeWhatsAppPhone(d.phone);
+      const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+    }
+
+    function sendPaymentReceiptWhatsApp(debtorId, amount, currency, note) {
+      const d = state.debtors.find(x => x.id === debtorId);
+      if (!d) return;
+      const s = calcDebtorSummary(d);
+      const paidStr = currency === 'USD' ? fmtUsd(amount) : fmtIqd(amount);
+      const msg = `✅ وصل قبض رسمي صادر عن (${settings.officeName})\nالعميل المحترم: ${d.name}\nالمبلغ المستلم: ${paidStr}\nالبيان: ${note || 'تسديد دفعة حساب'}\n-------------------\nالرصيد المتبقي الحالي:\n• بالدينار العراقي: ${fmtIqd(s.balIqd)}\n• بالدولار الأمريكي: ${fmtUsd(s.balUsd)}\nالتاريخ: ${new Date().toLocaleString('ar-IQ')}\nشكراً لالتزامكم.`;
+      const phone = normalizeWhatsAppPhone(d.phone);
+      const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+    }
+
+    function renderAll() {
+      document.getElementById('ribbonOfficeName').textContent = settings.officeName;
+      document.getElementById('sidebarOfficeName').textContent = settings.officeName;
+      document.getElementById('sidebarFooterOffice').textContent = settings.officeName;
+      document.getElementById('headerOfficeTitle').textContent = settings.officeName;
+      document.getElementById('reportOfficeTitle').textContent = settings.officeName;
+      document.getElementById('headerExchangeRate').textContent = Number(settings.exchangeRate || 1500).toLocaleString('en-US');
+
+      const summaries = state.debtors.map(calcDebtorSummary);
+      const totBalIqd = summaries.reduce((s, x) => s + x.balIqd, 0);
+      const totBalUsd = summaries.reduce((s, x) => s + x.balUsd, 0);
+      const totPayIqd = summaries.reduce((s, x) => s + x.payIqd, 0);
+      const totPayUsd = summaries.reduce((s, x) => s + x.payUsd, 0);
+      const activeCount = summaries.filter(x => x.balIqd > 0 || x.balUsd > 0).length;
+      const overdueCount = summaries.filter(x => x.isOverdue).length;
+
+      document.getElementById('topRibbonSummary').textContent = `المستحق: ${fmtIqd(totBalIqd)} | ${fmtUsd(totBalUsd)}`;
+
+      document.getElementById('kpiContainer').innerHTML = `
+        <div class="card">
+          <div style="color:var(--text-secondary);font-size:0.85rem">إجمالي الديون المستحقة (المتبقية)</div>
+          <div style="font-size:1.35rem;font-weight:700;color:var(--crimson);margin-top:6px">${fmtIqd(totBalIqd)}</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--crimson)">${fmtUsd(totBalUsd)}</div>
+        </div>
+        <div class="card">
+          <div style="color:var(--text-secondary);font-size:0.85rem">إجمالي المبالغ المحصلة (التسديدات)</div>
+          <div style="font-size:1.35rem;font-weight:700;color:var(--emerald);margin-top:6px">${fmtIqd(totPayIqd)}</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--emerald)">${fmtUsd(totPayUsd)}</div>
+        </div>
+        <div class="card">
+          <div style="color:var(--text-secondary);font-size:0.85rem">المدينون النشطون والتنبيهات</div>
+          <div style="font-size:1.45rem;font-weight:700;color:var(--primary);margin-top:6px">${activeCount} من ${summaries.length}</div>
+          <div style="font-size:0.82rem;color:${overdueCount > 0 ? 'var(--crimson)' : 'var(--text-muted)'};font-weight:700">
+            ${overdueCount > 0 ? `⚠️ ${overdueCount} مدين متأخر عن تاريخ الاستحقاق` : 'لا توجد ديون متأخرة عن الاستحقاق'}
+          </div>
+        </div>
+      `;
+
+      const emptyEl = document.getElementById('dashboardEmptyState');
+      const recentSec = document.getElementById('dashboardRecentSection');
+      if (state.debtors.length === 0) {
+        emptyEl.innerHTML = `
+          <div class="empty-box">
+            <h3 style="margin-bottom:8px">سجل الديون فارغ وجاهز للعمل</h3>
+            <p style="color:var(--text-secondary);margin-bottom:16px">تم تصفير جميع البيانات الوهمية. ابدأ الآن بإضافة أول مدين لتسجيل الديون والدفعات بالدينار العراقي والدولار الأمريكي.</p>
+            <button class="btn btn-primary" onclick="openDebtorModal()">+ إضافة أول مدين الآن</button>
+          </div>
+        `;
+        recentSec.style.display = 'none';
+      } else {
+        emptyEl.innerHTML = '';
+        recentSec.style.display = 'block';
+      }
+
+      const dMap = Object.fromEntries(state.debtors.map(d => [d.id, d]));
+      const sortedTx = [...state.transactions].sort((a, b) => b.timestamp - a.timestamp);
+
+      document.getElementById('recentTxTable').innerHTML = sortedTx.slice(0, 10).map(t => {
+        const isDebt = t.type === 'DEBT';
+        const dName = dMap[t.debtorId]?.name || ('عميل #' + t.debtorId);
+        return `<tr>
+          <td>${new Date(t.timestamp).toLocaleDateString('ar-IQ')}</td>
+          <td style="font-weight:700">${dName}</td>
+          <td style="color:${isDebt ? 'var(--crimson)' : 'var(--emerald)'};font-weight:700">${isDebt ? 'دين (+)' : 'تسديد (-)'}</td>
+          <td><span class="badge ${t.currency === 'USD' ? 'badge-usd' : 'badge-iqd'}">${t.currency}</span></td>
+          <td style="font-weight:700">${t.currency === 'USD' ? fmtUsd(t.amount) : fmtIqd(t.amount)}</td>
+          <td>${t.note || ''}</td>
+          <td class="no-print">
+            ${!isDebt ? `<button class="btn btn-emerald btn-sm" onclick="sendPaymentReceiptWhatsApp(${t.debtorId}, ${t.amount}, '${t.currency}', '${(t.note || '').replace(/'/g, '')}')">وصل واتساب</button>` : ''}
+            <button class="btn btn-outline btn-sm" onclick="openEditTxModal(${t.id})">تعديل</button>
+            <button class="btn btn-crimson btn-sm" onclick="deleteTx(${t.id})">حذف</button>
+          </td>
+        </tr>`;
+      }).join('');
+
+      document.getElementById('allReportsTable').innerHTML = sortedTx.map(t => {
+        const isDebt = t.type === 'DEBT';
+        return `<tr>
+          <td>${new Date(t.timestamp).toLocaleString('ar-IQ')}</td>
+          <td style="font-weight:700">${dMap[t.debtorId]?.name || ''}</td>
+          <td>${isDebt ? 'دين' : 'تسديد'}</td>
+          <td><span class="badge ${t.currency === 'USD' ? 'badge-usd' : 'badge-iqd'}">${t.currency}</span></td>
+          <td style="font-weight:700">${t.currency === 'USD' ? fmtUsd(t.amount) : fmtIqd(t.amount)}</td>
+          <td>${t.note || ''}</td>
+          <td class="no-print">
+            <button class="btn btn-outline btn-sm" onclick="openEditTxModal(${t.id})">تعديل</button>
+            <button class="btn btn-crimson btn-sm" onclick="deleteTx(${t.id})">حذف</button>
+          </td>
+        </tr>`;
+      }).join('');
+
+      const q = (document.getElementById('searchDebtor')?.value || '').trim().toLowerCase();
+      const filteredDebtors = summaries.filter(s =>
+        !q || s.debtor.name.toLowerCase().includes(q) || (s.debtor.phone || '').includes(q) || (s.debtor.address || '').toLowerCase().includes(q)
+      );
+
+      if (filteredDebtors.length === 0) {
+        document.getElementById('debtorsListContainer').innerHTML = `
+          <div class="empty-box" style="grid-column:1/-1">
+            <h3>لا يوجد مدينون مطابقون</h3>
+            <p style="color:var(--text-secondary);margin:8px 0 14px">يمكنك إضافة مدين جديد للبدء بتسجيل الحسابات.</p>
+            <button class="btn btn-primary" onclick="openDebtorModal()">+ إضافة مدين جديد</button>
+          </div>
+        `;
+      } else {
+        document.getElementById('debtorsListContainer').innerHTML = filteredDebtors.map(s => `
+          <div class="card" style="${s.isOverdue ? 'border-color:var(--crimson)' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+              <div>
+                <h3 style="font-size:1.05rem">${s.debtor.name}</h3>
+                <div style="font-size:0.8rem;color:var(--text-muted)">${s.debtor.phone || ''} • ${s.debtor.address || ''}</div>
+                ${s.debtor.dueDate ? `<div style="font-size:0.76rem;color:${s.isOverdue ? 'var(--crimson)' : 'var(--text-secondary)'};margin-top:2px">تاريخ الاستحقاق: ${s.debtor.dueDate}</div>` : ''}
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+                <span class="badge ${s.isSettled ? 'badge-usd' : 'badge-iqd'}">${s.isSettled ? 'مسدد بالكامل ✓' : 'عميل نشط'}</span>
+                ${s.isOverdue ? `<span class="badge badge-crimson">⚠️ متأخر عن السداد</span>` : ''}
+              </div>
+            </div>
+            <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div style="background:var(--surface-elevated);padding:10px;border-radius:10px">
+                <div style="font-size:0.75rem;color:var(--text-muted)">المتبقي (د.ع IQD)</div>
+                <div style="font-weight:700;color:${s.balIqd > 0 ? 'var(--crimson)' : 'var(--emerald)'}">${fmtIqd(s.balIqd)}</div>
+              </div>
+              <div style="background:var(--surface-elevated);padding:10px;border-radius:10px">
+                <div style="font-size:0.75rem;color:var(--text-muted)">المتبقي ($ USD)</div>
+                <div style="font-weight:700;color:${s.balUsd > 0 ? 'var(--crimson)' : 'var(--emerald)'}">${fmtUsd(s.balUsd)}</div>
+              </div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap" class="no-print">
+              <button class="btn btn-emerald btn-sm" onclick="openTxModalFor(${s.debtor.id}, 'PAYMENT')">تسديد دفعة</button>
+              <button class="btn btn-outline btn-sm" onclick="openTxModalFor(${s.debtor.id}, 'DEBT')">إضافة دين</button>
+              ${(s.balIqd > 0 || s.balUsd > 0) ? `<button class="btn btn-outline btn-sm" onclick="sendDebtReminderWhatsApp(${s.debtor.id})">📲 مطالبة واتساب</button>` : ''}
+              <button class="btn btn-crimson btn-sm" onclick="promptDeleteDebtor(${s.debtor.id})">حذف المدين</button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('txDebtorId').innerHTML = state.debtors.map(d =>
+        `<option value="${d.id}">${d.name}</option>`
+      ).join('');
+    }
+
+    function switchTab(tab, btn) {
+      ['dashboard', 'debtors', 'reports', 'backup'].forEach(t => {
+        document.getElementById('tab-' + t).style.display = (t === tab) ? 'block' : 'none';
+      });
+      document.querySelectorAll('.sidebar .nav-item').forEach(b => b.classList.remove('active'));
+      if (btn && btn.classList.contains('nav-item')) btn.classList.add('active');
+    }
+
+    function toggleTheme() {
+      const dark = document.body.getAttribute('data-theme') === 'dark';
+      document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+    }
+
+    function closeModals() {
+      document.querySelectorAll('.modal-backdrop').forEach(m => {
+        if (m.id !== 'pinLockOverlay') m.classList.remove('open');
+      });
+    }
+
+    function saveOnboardingSetup() {
+      const office = document.getElementById('onboardOfficeName').value.trim() || 'مكتب المحاسبة والتجارة العامة';
+      const rate = Number(document.getElementById('onboardExchangeRate').value) || 1500;
+      const pin = document.getElementById('onboardPin').value.trim();
+      settings.officeName = office;
+      settings.exchangeRate = rate;
+      settings.pinCode = (/^\d{4}$/.test(pin)) ? pin : '';
+      settings.onboarded = true;
+      document.getElementById('onboardingModal').classList.remove('open');
+      persist();
+    }
+
+    function openOfficeSettingsModal() {
+      document.getElementById('editOfficeNameInput').value = settings.officeName;
+      document.getElementById('editExchangeRateInput').value = settings.exchangeRate || 1500;
+      document.getElementById('officeSettingsModal').classList.add('open');
+    }
+
+    function saveOfficeSettings() {
+      const office = document.getElementById('editOfficeNameInput').value.trim();
+      const rate = Number(document.getElementById('editExchangeRateInput').value) || 1500;
+      if (office) settings.officeName = office;
+      settings.exchangeRate = rate;
+      settings.onboarded = true;
+      closeModals();
+      persist();
+    }
+
+    function openPinModal() {
+      document.getElementById('pinSetupInput').value = settings.pinCode || '';
+      document.getElementById('pinSetupModal').classList.add('open');
+    }
+
+    function savePinSetup() {
+      const pin = document.getElementById('pinSetupInput').value.trim();
+      if (pin && !/^\d{4}$/.test(pin)) {
+        alert('يرجى إدخال 4 أرقام فقط أو ترك الحقل فارغاً لإلغاء القفل.');
+        return;
+      }
+      settings.pinCode = pin;
+      closeModals();
+      persist();
+    }
+
+    function verifyPinUnlock() {
+      const entered = document.getElementById('unlockPinInput').value.trim();
+      if (entered === settings.pinCode) {
+        document.getElementById('pinLockOverlay').classList.remove('open');
+        document.getElementById('pinErrorMsg').style.display = 'none';
+      } else {
+        document.getElementById('pinErrorMsg').style.display = 'block';
+      }
+    }
+
+    function openDebtorModal() { document.getElementById('debtorModal').classList.add('open'); }
+
+    function openTxModal() {
+      if (state.debtors.length === 0) {
+        openDebtorModal();
+        return;
+      }
+      document.getElementById('editingTxId').value = '';
+      document.getElementById('txModalTitle').textContent = 'تسجيل عملية مالية جديدة';
+      document.getElementById('txAmount').value = '';
+      document.getElementById('txNote').value = '';
+      document.getElementById('txModal').classList.add('open');
+    }
+
+    function openTxModalFor(debtorId, type) {
+      renderAll();
+      document.getElementById('editingTxId').value = '';
+      document.getElementById('txModalTitle').textContent = 'تسجيل عملية مالية جديدة';
+      document.getElementById('txDebtorId').value = String(debtorId);
+      document.getElementById('txType').value = type;
+      document.getElementById('txAmount').value = '';
+      document.getElementById('txNote').value = '';
+      document.getElementById('txModal').classList.add('open');
+    }
+
+    function openEditTxModal(txId) {
+      const tx = state.transactions.find(x => x.id === txId);
+      if (!tx) return;
+      renderAll();
+      document.getElementById('editingTxId').value = String(tx.id);
+      document.getElementById('txModalTitle').textContent = 'تعديل العملية المالية';
+      document.getElementById('txDebtorId').value = String(tx.debtorId);
+      document.getElementById('txType').value = tx.type;
+      document.getElementById('txCurrency').value = tx.currency;
+      document.getElementById('txAmount').value = tx.amount;
+      document.getElementById('txNote').value = tx.note || '';
+      document.getElementById('txModal').classList.add('open');
+    }
+
+    function saveDebtor() {
       const name = document.getElementById('debtorName').value.trim();
-      const phone = document.getElementById('debtorPhone').value.trim();
+      if (!name) return;
+      state.debtors.push({
+        id: Date.now(),
+        name,
+        phone: document.getElementById('debtorPhone').value.trim(),
+        address: document.getElementById('debtorAddress').value.trim(),
+        dueDate: document.getElementById('debtorDueDate').value || '',
+        creditLimitIqd: Number(document.getElementById('debtorLimitIqd').value) || 0,
+        creditLimitUsd: Number(document.getElementById('debtorLimitUsd').value) || 0
+      });
+      document.getElementById('debtorName').value = '';
+      document.getElementById('debtorPhone').value = '';
+      document.getElementById('debtorAddress').value = '';
+      document.getElementById('debtorDueDate').value = '';
+      closeModals();
+      persist();
+    }
+
+    function saveTransaction() {
+      const editingId = document.getElementById('editingTxId').value;
+      const debtorId = Number(document.getElementById('txDebtorId').value);
       const type = document.getElementById('txType').value;
       const currency = document.getElementById('txCurrency').value;
-      const amount = parseFloat(document.getElementById('txAmount').value);
-      if (!name || isNaN(amount) || amount <= 0) return;
-      let d = db.debtors.find(x => x.name === name);
-      if (!d) {
-        d = { id: Date.now(), name, phone, debtIqd: 0, paidIqd: 0, debtUsd: 0, paidUsd: 0 };
-        db.debtors.push(d);
-      }
-      const prevActive = ((d.debtIqd - d.paidIqd) > 0) || ((d.debtUsd - d.paidUsd) > 0);
-      if (currency === 'USD') {
-        if (type === 'DEBT') d.debtUsd += amount; else d.paidUsd += amount;
+      const amount = Number(document.getElementById('txAmount').value);
+      const note = document.getElementById('txNote').value.trim();
+      if (!debtorId || amount <= 0) return;
+
+      if (editingId) {
+        const idx = state.transactions.findIndex(x => String(x.id) === String(editingId));
+        if (idx !== -1) {
+          state.transactions[idx] = { ...state.transactions[idx], debtorId, type, currency, amount, note };
+        }
+        closeModals();
+        persist();
       } else {
-        if (type === 'DEBT') d.debtIqd += amount; else d.paidIqd += amount;
-      }
-      const nowActive = (Math.max(0, d.debtIqd - d.paidIqd) > 0) || (Math.max(0, d.debtUsd - d.paidUsd) > 0);
-      save();
-      if (type === 'PAYMENT' && prevActive && !nowActive) {
-        showClearance(d);
+        state.transactions.push({
+          id: Date.now(),
+          debtorId,
+          type,
+          currency,
+          amount,
+          note: note || (type === 'DEBT' ? 'تسجيل دين' : 'تسديد دفعة'),
+          timestamp: Date.now()
+        });
+        closeModals();
+        persist();
+
+        if (type === 'PAYMENT') {
+          const d = state.debtors.find(x => x.id === debtorId);
+          if (d) {
+            const paidStr = currency === 'USD' ? fmtUsd(amount) : fmtIqd(amount);
+            document.getElementById('receiptSummaryText').textContent = `تم استلام دفعة بقيمة (${paidStr}) من العميل (${d.name}). هل ترغب بإرسال وصل قبض رسمي عبر واتساب؟`;
+            document.getElementById('receiptWhatsappBtn').onclick = () => {
+              sendPaymentReceiptWhatsApp(debtorId, amount, currency, note);
+              closeModals();
+            };
+            document.getElementById('paymentReceiptModal').classList.add('open');
+          }
+        }
       }
     }
 
-    function settleFull(id) {
-      const d = db.debtors.find(x => x.id === id);
+    function deleteTx(txId) {
+      if (!confirm('هل أنت متأكد من حذف هذه العملية المالية نهائياً؟')) return;
+      state.transactions = state.transactions.filter(x => x.id !== txId);
+      persist();
+    }
+
+    function promptDeleteDebtor(debtorId) {
+      const d = state.debtors.find(x => x.id === debtorId);
       if (!d) return;
-      d.paidIqd = d.debtIqd;
-      d.paidUsd = d.debtUsd;
-      save();
-      showClearance(d);
+      pendingDeleteDebtorId = debtorId;
+      const s = calcDebtorSummary(d);
+      document.getElementById('deleteDebtorNamePrompt').textContent = `العميل: ${d.name}`;
+      const warnBox = document.getElementById('deleteDebtorUnpaidWarning');
+      if (s.balIqd > 0 || s.balUsd > 0) {
+        warnBox.style.display = 'block';
+        warnBox.textContent = `تنبيه: هذا المدين لا يزال بذمته مبلغ [${formatDualBalance(s.balIqd, s.balUsd)}], هل أنت متأكد من حذفه نهائياً؟`;
+      } else {
+        warnBox.style.display = 'none';
+      }
+      document.getElementById('deleteDebtorConfirmModal').classList.add('open');
     }
 
-    function showClearance(d) {
-      document.getElementById('clearanceText').textContent =
-        `تم سداد كامل المستحقات على العميل «${d.name}» (${(d.paidIqd||0).toLocaleString()} د.ع | ${(d.paidUsd||0).toLocaleString()} $) وأصبح رصيده بالعملتين (0 د.ع | 0 $).`;
-      document.getElementById('clearanceModal').style.display = 'flex';
+    function confirmDeleteDebtorNow() {
+      if (!pendingDeleteDebtorId) return;
+      state.debtors = state.debtors.filter(d => d.id !== pendingDeleteDebtorId);
+      state.transactions = state.transactions.filter(t => t.debtorId !== pendingDeleteDebtorId);
+      pendingDeleteDebtorId = null;
+      closeModals();
+      persist();
     }
 
-    function exportCsv() {
-      let csv = '\uFEFFاسم المدين,الهاتف,إجمالي الدين (IQD),إجمالي المسدد (IQD),الرصيد المتبقي (IQD),إجمالي الدين (USD),إجمالي المسدد (USD),الرصيد المتبقي (USD)\n';
-      db.debtors.forEach(d => {
-        const rIqd = Math.max(0, (d.debtIqd||0) - (d.paidIqd||0));
-        const rUsd = Math.max(0, (d.debtUsd||0) - (d.paidUsd||0));
-        csv += `"${d.name}","${d.phone}",${d.debtIqd||0},${d.paidIqd||0},${rIqd},${d.debtUsd||0},${d.paidUsd||0},${rUsd}\n`;
+    function openResetAllModal() {
+      document.getElementById('resetAllConfirmModal').classList.add('open');
+    }
+
+    function confirmResetAllDataNow() {
+      state.debtors = [];
+      state.transactions = [];
+      closeModals();
+      persist();
+    }
+
+    function exportDebtorsCsv() {
+      const summaries = state.debtors.map(calcDebtorSummary);
+      let csv = '\uFEFF' + `"${settings.officeName} - سجل المدينين"\n` +
+        'الاسم,الهاتف,العنوان,الرصيد المتبقي (د.ع IQD),الرصيد المتبقي ($ USD),تاريخ الاستحقاق\n';
+      summaries.forEach(s => {
+        csv += `"${s.debtor.name}","${s.debtor.phone}","${s.debtor.address}",${s.balIqd},${s.balUsd},"${s.debtor.dueDate || ''}"\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'sijil_alduyun_iqd_usd_utf8bom.csv';
+      a.download = 'debtors_dual_currency_utf8bom.csv';
       a.click();
     }
 
-    function downloadBackup() {
-      const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+    function exportTransactionsCsv() {
+      const dMap = Object.fromEntries(state.debtors.map(d => [d.id, d.name]));
+      let csv = '\uFEFF' + `"${settings.officeName} - سجل العمليات المالية"\n` +
+        'التاريخ,العميل,العملية,العملة,المبلغ,البيان\n';
+      state.transactions.forEach(t => {
+        csv += `"${new Date(t.timestamp).toLocaleString('ar-IQ')}","${dMap[t.debtorId] || ''}","${t.type === 'DEBT' ? 'دين' : 'تسديد'}","${t.currency}",${t.amount},"${t.note || ''}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'sijil_alduyun_backup.json';
+      a.download = 'transactions_dual_currency_utf8bom.csv';
       a.click();
     }
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    function downloadJsonBackup() {
+      const payload = { ...state, officeName: settings.officeName, exportedAt: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `debt_ledger_backup_${Date.now()}.json`;
+      a.click();
     }
-    render();
+
+    function restoreJsonBackup(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          if (Array.isArray(parsed.debtors) && Array.isArray(parsed.transactions)) {
+            state = { debtors: parsed.debtors, transactions: parsed.transactions };
+            persist();
+            alert('تمت استعادة النسخة الاحتياطية بنجاح!');
+          }
+        } catch (err) { alert('ملف JSON غير صالح'); }
+      };
+      reader.readAsText(file);
+    }
+
+    // Initialize Onboarding or PIN Lock
+    if (!settings.onboarded) {
+      document.getElementById('onboardOfficeName').value = settings.officeName;
+      document.getElementById('onboardExchangeRate').value = settings.exchangeRate || 1500;
+      document.getElementById('onboardingModal').classList.add('open');
+    } else if (settings.pinCode && settings.pinCode.length === 4) {
+      document.getElementById('lockOfficeTitle').textContent = settings.officeName;
+      document.getElementById('pinLockOverlay').classList.add('open');
+    }
+
+    renderAll();
   </script>
 </body>
 </html>

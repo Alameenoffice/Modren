@@ -19,10 +19,12 @@ interface LedgerDao {
     suspend fun getTransactionsForDebtorOnce(debtorId: Long): List<LedgerTransactionEntity>
     suspend fun insertTransaction(transaction: LedgerTransactionEntity): Long
     suspend fun insertTransactions(transactions: List<LedgerTransactionEntity>)
+    suspend fun updateTransaction(transaction: LedgerTransactionEntity)
     suspend fun deleteTransaction(transaction: LedgerTransactionEntity)
     suspend fun deleteTransactionById(id: Long)
     suspend fun clearAllTransactions()
     suspend fun clearAllDebtors()
+    suspend fun clearAllData()
     suspend fun replaceEntireDatabase(
         debtors: List<DebtorEntity>,
         transactions: List<LedgerTransactionEntity>

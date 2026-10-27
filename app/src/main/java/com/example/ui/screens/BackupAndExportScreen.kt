@@ -21,10 +21,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.CurrencyExchange
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Share
@@ -41,15 +46,21 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.ui.LedgerUiState
+import com.example.ui.components.ResetAllDataConfirmationDialog
 import com.example.ui.theme.LocalLedgerColors
 import com.example.util.ExportAndBackupManager
 import com.example.util.Formatters
@@ -58,8 +69,15 @@ import kotlinx.coroutines.launch
 @Composable
 fun BackupAndExportScreen(
     uiState: LedgerUiState,
+    officeName: String,
+    usdToIqdRate: Double,
+    hasPinCode: Boolean,
     hasLocalSnapshot: Boolean,
     localSnapshotTimestamp: Long,
+    onOpenOfficeSettings: () -> Unit,
+    onOpenPinSettings: () -> Unit,
+    onLockAppNow: () -> Unit,
+    onResetAllApplicationData: () -> Unit,
     onCreateLocalSnapshot: () -> Unit,
     onRestoreLocalSnapshot: () -> Unit,
     onRestoreFromJsonString: (String) -> Unit,
@@ -68,6 +86,8 @@ fun BackupAndExportScreen(
     val colors = LocalLedgerColors.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    var showResetConfirmationModal by remember { mutableStateOf(false) }
 
     val saveJsonLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -97,7 +117,10 @@ fun BackupAndExportScreen(
         contract = ActivityResultContracts.CreateDocument("text/csv")
     ) { uri ->
         if (uri != null) {
-            val csv = ExportAndBackupManager.buildDebtorsCsv(uiState.debtorSummaries)
+            val csv = ExportAndBackupManager.buildDebtorsCsv(
+                summaries = uiState.debtorSummaries,
+                officeName = officeName
+            )
             context.contentResolver.openOutputStream(uri)?.use { out ->
                 out.write(csv.toByteArray(Charsets.UTF_8))
             }
@@ -111,6 +134,106 @@ fun BackupAndExportScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Office Name, Exchange Rate & PIN Security Settings Card
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = colors.cardSurface),
+                border = BorderStroke(1.dp, colors.primaryInteractive.copy(alpha = 0.45f))
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Business,
+                            contentDescription = null,
+                            tint = colors.primaryInteractive
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "إعدادات المكتب، سعر الصرف، والحماية",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = colors.textPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = colors.elevatedSurface,
+                        border = BorderStroke(1.dp, colors.subtleBorder)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(
+                                text = "اسم المكتب أو الشركة: $officeName",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = colors.textPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "سعر الصرف المعتمد: 1 دولار ($) = ${Formatters.formatNumber(usdToIqdRate)} د.ع",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.textSecondary
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = onOpenOfficeSettings,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .testTag("settings_edit_office_button"),
+                                    colors = ButtonDefaults.buttonColors(containerColor = colors.primaryInteractive),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("تعديل اسم المكتب وسعر الصرف", color = Color.White)
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onOpenPinSettings,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("settings_pin_lock_button"),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(if (hasPinCode) "تغيير / إلغاء رمز PIN (مفعل)" else "تفعيل قفل التطبيق برمز PIN")
+                        }
+
+                        if (hasPinCode) {
+                            Button(
+                                onClick = onLockAppNow,
+                                colors = ButtonDefaults.buttonColors(containerColor = colors.sidebarSurface),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("قفل الآن", color = Color.White)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Local Offline Status Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -333,7 +456,7 @@ fun BackupAndExportScreen(
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "يدعم التصدير بصيغة Excel (CSV بترميز UTF-8-BOM لدعم العربية) مع فصل واضح لنوع العملة (IQD / USD) والأرصدة التراكمية.",
+                        text = "يدعم التصدير بصيغة Excel (CSV بترميز UTF-8-BOM لدعم العربية) مع ترويسة ($officeName) وفصل واضح لنوع العملة (IQD / USD).",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.textSecondary
                     )
@@ -342,7 +465,10 @@ fun BackupAndExportScreen(
 
                     Button(
                         onClick = {
-                            val csv = ExportAndBackupManager.buildDebtorsCsv(uiState.debtorSummaries)
+                            val csv = ExportAndBackupManager.buildDebtorsCsv(
+                                summaries = uiState.debtorSummaries,
+                                officeName = officeName
+                            )
                             ExportAndBackupManager.saveAndShareFile(
                                 context = context,
                                 fileName = "debtors_dual_currency_utf8bom.csv",
@@ -382,6 +508,7 @@ fun BackupAndExportScreen(
                         onClick = {
                             val pdf = ExportAndBackupManager.generateStatementOrReportPdfFile(
                                 context = context,
+                                officeName = officeName,
                                 title = "التقرير المالي الشامل لسجل الديون (IQD | USD)",
                                 subtitle = "إجمالي المدينين: ${uiState.debtors.size} • المدينون النشطون: ${uiState.activeDebtorsCount}",
                                 summaryLines = listOf(
@@ -419,5 +546,63 @@ fun BackupAndExportScreen(
                 }
             }
         }
+
+        // Factory Reset / Wipe All Data Card
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = colors.cardSurface),
+                border = BorderStroke(1.dp, colors.debtCrimson.copy(alpha = 0.55f))
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.DeleteForever,
+                            contentDescription = null,
+                            tint = colors.debtCrimson
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "تصفير ومسح جميع بيانات التطبيق",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = colors.debtCrimson,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "يمكّنك هذا الخيار من حذف جميع المدينين والعمليات المسجلة نهائياً والبدء بسجل محاسبي جديد وفارغ تماماً.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.textSecondary
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = { showResetConfirmationModal = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("open_reset_all_data_modal_button"),
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.debtCrimson),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("تصفير ومسح جميع بيانات التطبيق", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+
+    if (showResetConfirmationModal) {
+        ResetAllDataConfirmationDialog(
+            debtorsCount = uiState.debtors.size,
+            transactionsCount = uiState.transactions.size,
+            onDismiss = { showResetConfirmationModal = false },
+            onConfirmReset = {
+                onResetAllApplicationData()
+                showResetConfirmationModal = false
+            }
+        )
     }
 }

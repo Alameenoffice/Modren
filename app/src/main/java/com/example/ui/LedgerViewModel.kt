@@ -9,6 +9,7 @@ import com.example.data.local.CurrencyCode
 import com.example.data.local.DebtorEntity
 import com.example.data.local.DebtorSummary
 import com.example.data.local.LedgerTransactionEntity
+import com.example.data.local.PaymentReceiptEvent
 import com.example.data.local.StatementEntry
 import com.example.data.local.TransactionType
 import com.example.data.repository.LedgerRepository
@@ -97,12 +98,23 @@ class LedgerViewModel(
     context: Context
 ) : ViewModel() {
 
-    private val prefs = context.getSharedPreferences("ledger_ui_prefs", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences("ledger_ui_prefs_v3", Context.MODE_PRIVATE)
 
     private val _isDarkMode = MutableStateFlow(prefs.getBoolean("dark_mode", false))
     val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
 
-    // Exchange rate (1 USD = X IQD) for optional unified estimation on Dashboard
+    // Onboarding & Office Name
+    private val _isOnboardingCompleted = MutableStateFlow(
+        prefs.getBoolean("onboarding_completed", false)
+    )
+    val isOnboardingCompleted: StateFlow<Boolean> = _isOnboardingCompleted.asStateFlow()
+
+    private val _officeName = MutableStateFlow(
+        prefs.getString("office_name", "مكتب المحاسبة والتجارة العامة") ?: "مكتب المحاسبة والتجارة العامة"
+    )
+    val officeName: StateFlow<String> = _officeName.asStateFlow()
+
+    // Exchange rate (1 USD = X IQD)
     private val _usdToIqdRate = MutableStateFlow(
         prefs.getFloat("usd_to_iqd_rate", 1500f).toDouble()
     )
@@ -112,6 +124,17 @@ class LedgerViewModel(
         prefs.getBoolean("show_unified_estimate", true)
     )
     val showUnifiedEstimate: StateFlow<Boolean> = _showUnifiedEstimate.asStateFlow()
+
+    // Optional 4-digit PIN Lock
+    private val _pinCode = MutableStateFlow<String?>(
+        prefs.getString("app_pin_code", null)?.takeIf { it.length == 4 }
+    )
+    val pinCode: StateFlow<String?> = _pinCode.asStateFlow()
+
+    private val _isAppLocked = MutableStateFlow(
+        !prefs.getString("app_pin_code", null).isNullOrBlank()
+    )
+    val isAppLocked: StateFlow<Boolean> = _isAppLocked.asStateFlow()
 
     private val _currentScreen = MutableStateFlow(AppScreen.DASHBOARD)
     val currentScreen: StateFlow<AppScreen> = _currentScreen.asStateFlow()
@@ -128,6 +151,9 @@ class LedgerViewModel(
     private val _activeClearanceEvent = MutableStateFlow<ClearanceEvent?>(null)
     val activeClearanceEvent: StateFlow<ClearanceEvent?> = _activeClearanceEvent.asStateFlow()
 
+    private val _activePaymentReceiptEvent = MutableStateFlow<PaymentReceiptEvent?>(null)
+    val activePaymentReceiptEvent: StateFlow<PaymentReceiptEvent?> = _activePaymentReceiptEvent.asStateFlow()
+
     private val _statusBannerMessage = MutableStateFlow<String?>(null)
     val statusBannerMessage: StateFlow<String?> = _statusBannerMessage.asStateFlow()
 
@@ -139,9 +165,6 @@ class LedgerViewModel(
 
     init {
         refreshLocalSnapshotInfo(context)
-        viewModelScope.launch {
-            repository.ensureSeedDataIfNeeded()
-        }
     }
 
     val uiState: StateFlow<LedgerUiState> = combine(
@@ -179,6 +202,11 @@ class LedgerViewModel(
             val isOverdue = hasActive &&
                 debtor.dueDateMillis != null &&
                 debtor.dueDateMillis < now
+            val overdueDays = if (isOverdue) {
+                Formatters.calculateDaysOverdue(debtor.dueDateMillis, now)
+            } else {
+                0
+            }
             val isOverLimit = (debtor.creditLimitIqd > 0.0 && currentBalanceIqd > debtor.creditLimitIqd) ||
                 (debtor.creditLimitUsd > 0.0 && currentBalanceUsd > debtor.creditLimitUsd)
             val isSettled = (totalDebtIqd > 0.0 || totalDebtUsd > 0.0) && !hasActive
@@ -194,6 +222,7 @@ class LedgerViewModel(
                 lastTransactionDate = lastTx,
                 transactionCount = dTxs.size,
                 isOverdue = isOverdue,
+                overdueDays = overdueDays,
                 isOverLimit = isOverLimit,
                 isSettled = isSettled
             )
@@ -265,21 +294,84 @@ class LedgerViewModel(
         initialValue = LedgerUiState()
     )
 
+    fun completeOnboardingSetup(
+        officeNameInput: String,
+        rateInput: Double,
+        optionalPin: String? = null
+    ) {
+        val cleanOffice = officeNameInput.trim().ifBlank { "مكتب المحاسبة والتجارة العامة" }
+        val validRate = if (rateInput > 0.0) rateInput else 1500.0
+        val cleanPin = optionalPin?.trim()?.takeIf { it.length == 4 && it.all(Char::isDigit) }
+
+        _officeName.value = cleanOffice
+        _usdToIqdRate.value = validRate
+        _isOnboardingCompleted.value = true
+
+        val editor = prefs.edit()
+            .putString("office_name", cleanOffice)
+            .putFloat("usd_to_iqd_rate", validRate.toFloat())
+            .putBoolean("onboarding_completed", true)
+
+        if (cleanPin != null) {
+            _pinCode.value = cleanPin
+            editor.putString("app_pin_code", cleanPin)
+        }
+        editor.apply()
+        _statusBannerMessage.value = "مرحباً بك في «$cleanOffice» • تم حفظ إعدادات النظام بنجاح"
+    }
+
+    fun updateOfficeAndExchangeSettings(
+        officeNameInput: String,
+        rate: Double,
+        showUnified: Boolean
+    ) {
+        val cleanOffice = officeNameInput.trim().ifBlank { _officeName.value }
+        val validRate = if (rate > 0.0) rate else 1500.0
+        _officeName.value = cleanOffice
+        _usdToIqdRate.value = validRate
+        _showUnifiedEstimate.value = showUnified
+        prefs.edit()
+            .putString("office_name", cleanOffice)
+            .putFloat("usd_to_iqd_rate", validRate.toFloat())
+            .putBoolean("show_unified_estimate", showUnified)
+            .putBoolean("onboarding_completed", true)
+            .apply()
+        _statusBannerMessage.value = "تم تحديث اسم المكتب «$cleanOffice» وسعر الصرف (1 $ = ${Formatters.formatIqd(validRate)})"
+    }
+
+    fun updatePinCode(newPin: String?) {
+        val cleanPin = newPin?.trim()?.takeIf { it.length == 4 && it.all(Char::isDigit) }
+        _pinCode.value = cleanPin
+        if (cleanPin != null) {
+            prefs.edit().putString("app_pin_code", cleanPin).apply()
+            _statusBannerMessage.value = "تم تفعيل قفل التطبيق برمز الحماية (4 أرقام)"
+        } else {
+            _isAppLocked.value = false
+            prefs.edit().remove("app_pin_code").apply()
+            _statusBannerMessage.value = "تم إلغاء قفل التطبيق برمز PIN"
+        }
+    }
+
+    fun unlockWithPin(enteredPin: String): Boolean {
+        val current = _pinCode.value
+        return if (current == null || enteredPin.trim() == current) {
+            _isAppLocked.value = false
+            true
+        } else {
+            false
+        }
+    }
+
+    fun lockAppNow() {
+        if (_pinCode.value != null) {
+            _isAppLocked.value = true
+        }
+    }
+
     fun toggleDarkMode() {
         val next = !_isDarkMode.value
         _isDarkMode.value = next
         prefs.edit().putBoolean("dark_mode", next).apply()
-    }
-
-    fun updateExchangeRateSettings(rate: Double, showUnified: Boolean) {
-        val validRate = if (rate > 0.0) rate else 1500.0
-        _usdToIqdRate.value = validRate
-        _showUnifiedEstimate.value = showUnified
-        prefs.edit()
-            .putFloat("usd_to_iqd_rate", validRate.toFloat())
-            .putBoolean("show_unified_estimate", showUnified)
-            .apply()
-        _statusBannerMessage.value = "تم تحديث سعر الصرف التقريبي (1 $ = ${Formatters.formatIqd(validRate)})"
     }
 
     fun navigateTo(screen: AppScreen) {
@@ -309,6 +401,26 @@ class LedgerViewModel(
 
     fun dismissClearanceModal() {
         _activeClearanceEvent.value = null
+    }
+
+    fun dismissPaymentReceiptModal() {
+        _activePaymentReceiptEvent.value = null
+    }
+
+    fun triggerPaymentReceiptModal(
+        debtor: DebtorEntity,
+        entry: StatementEntry
+    ) {
+        _activePaymentReceiptEvent.value = PaymentReceiptEvent(
+            debtor = debtor,
+            paymentAmount = entry.transaction.amount,
+            currency = entry.transaction.currency,
+            note = entry.transaction.note,
+            timestamp = entry.transaction.timestamp,
+            remainingBalanceIqd = entry.runningBalanceIqd,
+            remainingBalanceUsd = entry.runningBalanceUsd,
+            receiptNumber = "RCP-${entry.transaction.id}-${entry.transaction.timestamp % 10000}"
+        )
     }
 
     fun triggerClearanceModalForDebtor(summary: DebtorSummary) {
@@ -421,12 +533,17 @@ class LedgerViewModel(
 
     fun deleteDebtor(debtorId: Long) {
         viewModelScope.launch {
+            val debtorName = repository.getDebtorById(debtorId)?.name ?: ""
             repository.deleteDebtor(debtorId)
             if (_selectedDebtorId.value == debtorId) {
                 _selectedDebtorId.value = null
                 _currentScreen.value = AppScreen.DEBTORS
             }
-            _statusBannerMessage.value = "تم حذف سجل المدين وكافة عملياته"
+            _statusBannerMessage.value = if (debtorName.isNotBlank()) {
+                "تم حذف سجل المدين «$debtorName» وكافة عملياته نهائياً"
+            } else {
+                "تم حذف سجل المدين وكافة عملياته نهائياً"
+            }
         }
     }
 
@@ -452,17 +569,18 @@ class LedgerViewModel(
             val prevBalUsd = (prevDebtUsd - prevPaidUsd).coerceAtLeast(0.0)
 
             val hadActiveDebt = prevBalIqd > 0.009 || prevBalUsd > 0.009
+            val cleanNote = note.trim().ifBlank {
+                if (type == TransactionType.DEBT) "تسجيل دين جديد" else "دفعة تسديد"
+            }
 
-            repository.insertTransaction(
+            val txId = repository.insertTransaction(
                 LedgerTransactionEntity(
                     debtorId = debtorId,
                     type = type,
                     currency = currency,
                     amount = amount,
                     timestamp = timestamp,
-                    note = note.trim().ifBlank {
-                        if (type == TransactionType.DEBT) "تسجيل دين جديد" else "دفعة تسديد"
-                    }
+                    note = cleanNote
                 )
             )
 
@@ -484,11 +602,44 @@ class LedgerViewModel(
                         referenceNumber = "CLR-${debtor.id}-${timestamp % 100000}"
                     )
                 } else {
+                    _activePaymentReceiptEvent.value = PaymentReceiptEvent(
+                        debtor = debtor,
+                        paymentAmount = amount,
+                        currency = currency,
+                        note = cleanNote,
+                        timestamp = timestamp,
+                        remainingBalanceIqd = newBalIqd,
+                        remainingBalanceUsd = newBalUsd,
+                        receiptNumber = "RCP-$txId-${timestamp % 10000}"
+                    )
                     _statusBannerMessage.value = "تم تسجيل دفعة تسديد بقيمة $formattedAmount للعميل «${debtor.name}»"
                 }
             } else {
                 _statusBannerMessage.value = "تم تسجيل دين جديد بقيمة $formattedAmount على «${debtor.name}»"
             }
+        }
+    }
+
+    fun updateTransaction(
+        existingTransaction: LedgerTransactionEntity,
+        newType: String,
+        newCurrency: String,
+        newAmount: Double,
+        newNote: String
+    ) {
+        if (newAmount <= 0.0) return
+        viewModelScope.launch {
+            repository.updateTransaction(
+                existingTransaction.copy(
+                    type = newType,
+                    currency = newCurrency,
+                    amount = newAmount,
+                    note = newNote.trim().ifBlank {
+                        if (newType == TransactionType.DEBT) "تسجيل دين" else "دفعة تسديد"
+                    }
+                )
+            )
+            _statusBannerMessage.value = "تم تعديل العملية المالية وتحديث الأرصدة التراكمية بنجاح"
         }
     }
 
@@ -546,6 +697,17 @@ class LedgerViewModel(
         }
     }
 
+    fun resetAllApplicationData(context: Context) {
+        viewModelScope.launch {
+            repository.clearAllData()
+            ExportAndBackupManager.deleteInternalBackupSnapshot(context)
+            refreshLocalSnapshotInfo(context)
+            _selectedDebtorId.value = null
+            _currentScreen.value = AppScreen.DASHBOARD
+            _statusBannerMessage.value = "تم تصفير ومسح جميع بيانات السجل بنجاح (الرصيد الآن 0)"
+        }
+    }
+
     fun refreshLocalSnapshotInfo(context: Context) {
         val (exists, timestamp) = ExportAndBackupManager.getInternalBackupSnapshotInfo(context)
         _hasLocalSnapshot.value = exists
@@ -556,7 +718,11 @@ class LedgerViewModel(
         viewModelScope.launch {
             val debtors = repository.getAllDebtorsOnce()
             val txs = repository.getAllTransactionsOnce()
-            val json = ExportAndBackupManager.exportDatabaseToJson(debtors, txs)
+            val json = ExportAndBackupManager.exportDatabaseToJson(
+                debtors = debtors,
+                transactions = txs,
+                officeName = _officeName.value
+            )
             ExportAndBackupManager.saveInternalBackupSnapshot(context, json)
             refreshLocalSnapshotInfo(context)
             _statusBannerMessage.value = "تم حفظ النسخة الاحتياطية المحلية الفورية بنجاح (${debtors.size} عميل، ${txs.size} عملية)"
@@ -589,7 +755,11 @@ class LedgerViewModel(
     suspend fun generateFullBackupJsonString(): String {
         val debtors = repository.getAllDebtorsOnce()
         val txs = repository.getAllTransactionsOnce()
-        return ExportAndBackupManager.exportDatabaseToJson(debtors, txs)
+        return ExportAndBackupManager.exportDatabaseToJson(
+            debtors = debtors,
+            transactions = txs,
+            officeName = _officeName.value
+        )
     }
 
     companion object {

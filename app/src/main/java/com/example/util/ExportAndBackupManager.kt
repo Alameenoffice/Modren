@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
+import android.net.Uri
 import android.os.Bundle
 import android.os.CancellationSignal
 import android.os.ParcelFileDescriptor
@@ -22,6 +23,7 @@ import com.example.data.local.CurrencyCode
 import com.example.data.local.DebtorEntity
 import com.example.data.local.DebtorSummary
 import com.example.data.local.LedgerTransactionEntity
+import com.example.data.local.PaymentReceiptEvent
 import com.example.data.local.StatementEntry
 import com.example.data.local.TransactionType
 import org.json.JSONArray
@@ -33,7 +35,7 @@ import java.io.FileOutputStream
 object ExportAndBackupManager {
 
     private const val UTF8_BOM = "\uFEFF"
-    private const val DEDICATION_TEXT = "صدقة جارية عن أحمد أبو رسلان"
+    private const val DEFAULT_OFFICE = "مكتب المحاسبة والتجارة العامة"
     private const val SNAPSHOT_FILENAME = "ledger_local_backup_snapshot.json"
 
     private fun escapeCsv(value: String): String {
@@ -41,13 +43,17 @@ object ExportAndBackupManager {
         return "\"$escaped\""
     }
 
-    fun buildDebtorsCsv(summaries: List<DebtorSummary>): String {
+    fun buildDebtorsCsv(
+        summaries: List<DebtorSummary>,
+        officeName: String = DEFAULT_OFFICE
+    ): String {
         val sb = StringBuilder(UTF8_BOM)
+        sb.appendLine("اسم المكتب / الشركة,${escapeCsv(officeName)},تاريخ التصدير,${escapeCsv(Formatters.formatDateTime(System.currentTimeMillis()))}")
         sb.appendLine("معرف العميل,اسم المدين,رقم الهاتف,العنوان,إجمالي الدين (IQD),إجمالي المسدد (IQD),الرصيد المتبقي (IQD),إجمالي الدين (USD),إجمالي المسدد (USD),الرصيد المتبقي (USD),تاريخ الاستحقاق,الحالة")
         summaries.forEach { s ->
             val status = when {
                 s.isSettled -> "مسدد بالكامل"
-                s.isOverdue -> "متأخر السداد"
+                s.isOverdue -> "متأخر عن السداد"
                 s.isOverLimit -> "تجاوز سقف الدين"
                 else -> "نشط"
             }
@@ -71,9 +77,13 @@ object ExportAndBackupManager {
         return sb.toString()
     }
 
-    fun buildStatementCsv(debtor: DebtorEntity, entries: List<StatementEntry>): String {
+    fun buildStatementCsv(
+        debtor: DebtorEntity,
+        entries: List<StatementEntry>,
+        officeName: String = DEFAULT_OFFICE
+    ): String {
         val sb = StringBuilder(UTF8_BOM)
-        sb.appendLine("كشف حساب تفصيلي للعميل,${escapeCsv(debtor.name)},رقم الهاتف,${escapeCsv(debtor.phone)}")
+        sb.appendLine("اسم المكتب / الشركة,${escapeCsv(officeName)},كشف حساب العميل,${escapeCsv(debtor.name)},رقم الهاتف,${escapeCsv(debtor.phone)}")
         sb.appendLine("رقم العملية,التاريخ والوقت,نوع العملية,العملة (IQD/USD),المبلغ,الرصيد التراكمي (IQD د.ع),الرصيد التراكمي (USD $),البيان والملاحظات")
         entries.forEach { entry ->
             val tx = entry.transaction
@@ -97,7 +107,8 @@ object ExportAndBackupManager {
     fun buildReportCsv(
         reportTitle: String,
         transactions: List<LedgerTransactionEntity>,
-        debtorMap: Map<Long, DebtorEntity>
+        debtorMap: Map<Long, DebtorEntity>,
+        officeName: String = DEFAULT_OFFICE
     ): String {
         val sb = StringBuilder(UTF8_BOM)
         val totalDebtIqd = transactions.filter { it.type == TransactionType.DEBT && it.currency == CurrencyCode.IQD }.sumOf { it.amount }
@@ -105,7 +116,7 @@ object ExportAndBackupManager {
         val totalDebtUsd = transactions.filter { it.type == TransactionType.DEBT && it.currency == CurrencyCode.USD }.sumOf { it.amount }
         val totalPaidUsd = transactions.filter { it.type == TransactionType.PAYMENT && it.currency == CurrencyCode.USD }.sumOf { it.amount }
 
-        sb.appendLine("${escapeCsv(reportTitle)},$DEDICATION_TEXT")
+        sb.appendLine("${escapeCsv(reportTitle)},${escapeCsv(officeName)}")
         sb.appendLine("إجمالي ديون الدينار (IQD),${Formatters.formatNumber(totalDebtIqd)},إجمالي تحصيل الدينار (IQD),${Formatters.formatNumber(totalPaidIqd)}")
         sb.appendLine("إجمالي ديون الدولار (USD),${Formatters.formatNumber(totalDebtUsd)},إجمالي تحصيل الدولار (USD),${Formatters.formatNumber(totalPaidUsd)}")
         sb.appendLine("رقم العملية,التاريخ والوقت,اسم العميل,نوع العملية,العملة (IQD/USD),المبلغ,البيان والملاحظات")
@@ -130,12 +141,13 @@ object ExportAndBackupManager {
     // JSON Backup & Restore (Dual Currency)
     fun exportDatabaseToJson(
         debtors: List<DebtorEntity>,
-        transactions: List<LedgerTransactionEntity>
+        transactions: List<LedgerTransactionEntity>,
+        officeName: String = DEFAULT_OFFICE
     ): String {
         val root = JSONObject()
         root.put("system", "سجل الديون - النظام المحاسبي المتكامل (IQD & USD)")
-        root.put("dedication", DEDICATION_TEXT)
-        root.put("version", 2)
+        root.put("officeName", officeName)
+        root.put("version", 3)
         root.put("exportedAt", System.currentTimeMillis())
 
         val debtorsArray = JSONArray()
@@ -244,6 +256,11 @@ object ExportAndBackupManager {
         return if (file.exists()) file.readText(Charsets.UTF_8) else null
     }
 
+    fun deleteInternalBackupSnapshot(context: Context) {
+        val file = File(context.filesDir, SNAPSHOT_FILENAME)
+        if (file.exists()) file.delete()
+    }
+
     fun saveAndShareFile(
         context: Context,
         fileName: String,
@@ -271,18 +288,138 @@ object ExportAndBackupManager {
         )
     }
 
-    fun buildClearanceWhatsAppMessage(event: ClearanceEvent): String {
+    // Smart WhatsApp Messaging (Direct to Debtor Phone)
+    fun openWhatsAppDirectOrShare(
+        context: Context,
+        phone: String,
+        message: String,
+        shareTitle: String
+    ) {
+        val normalizedPhone = Formatters.normalizePhoneForWhatsApp(phone)
+        val encodedText = Uri.encode(message)
+        val waUrl = if (normalizedPhone.isNotBlank()) {
+            "https://wa.me/$normalizedPhone?text=$encodedText"
+        } else {
+            "https://wa.me/?text=$encodedText"
+        }
+
+        try {
+            val viewIntent = Intent(Intent.ACTION_VIEW, Uri.parse(waUrl)).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(viewIntent)
+        } catch (e: Exception) {
+            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, message)
+                putExtra(Intent.EXTRA_SUBJECT, shareTitle)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(
+                Intent.createChooser(sendIntent, shareTitle).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        }
+    }
+
+    fun buildDebtReminderWhatsAppMessage(
+        officeName: String,
+        summary: DebtorSummary
+    ): String {
+        val header = officeName.ifBlank { DEFAULT_OFFICE }
+        val dueLine = if (summary.debtor.dueDateMillis != null) {
+            val statusStr = if (summary.isOverdue) " (متأخر عن السداد منذ ${summary.overdueDays} يوم)" else ""
+            "\n• تاريخ الاستحقاق المجدول: *${Formatters.formatDate(summary.debtor.dueDateMillis)}*$statusStr"
+        } else {
+            ""
+        }
+
+        return """
+            *$header*
+            *إشعار تذكير ومطالبة مالية*
+            ────────────────────
+            تحية طيبة للسيد / السادة: *${summary.debtor.name}* المحترم،
+            
+            نود تذكيركم بالرصيد المالي المتبقي في ذمتكم لدى *$header*:
+            • الرصيد المتبقي بالدينار العراقي: *${Formatters.formatIqd(summary.currentBalanceIqd)}*
+            • الرصيد المتبقي بالدولار الأمريكي: *${Formatters.formatUsd(summary.currentBalanceUsd)}*$dueLine
+            
+            يرجى التفضل بمراجعة الحساب أو تسديد المستحقات في أقرب وقت، شاكرين حسن تعاونكم والتزامكم.
+            ────────────────────
+            التاريخ: ${Formatters.formatDateTime(System.currentTimeMillis())}
+            صادر عن: *$header*
+        """.trimIndent()
+    }
+
+    fun sendDebtReminderViaWhatsApp(
+        context: Context,
+        officeName: String,
+        summary: DebtorSummary
+    ) {
+        val msg = buildDebtReminderWhatsAppMessage(officeName, summary)
+        openWhatsAppDirectOrShare(
+            context = context,
+            phone = summary.debtor.phone,
+            message = msg,
+            shareTitle = "إرسال تذكير بالدين عبر واتساب - ${summary.debtor.name}"
+        )
+    }
+
+    fun buildPaymentReceiptWhatsAppMessage(
+        officeName: String,
+        receipt: PaymentReceiptEvent
+    ): String {
+        val header = officeName.ifBlank { DEFAULT_OFFICE }
+        val amountStr = Formatters.formatByCurrency(receipt.paymentAmount, receipt.currency)
+        return """
+            *$header*
+            *وصل قبض دفعة مالية رسمي*
+            ────────────────────
+            رقم الوصل: ${receipt.receiptNumber}
+            التاريخ: ${Formatters.formatDateTime(receipt.timestamp)}
+            
+            استلمنا من السيد / السادة: *${receipt.debtor.name}*
+            مبلغاً وقدره: *$amountStr* (${Formatters.currencyFullName(receipt.currency)})
+            البيان: ${receipt.note.ifBlank { "دفعة تسديد من الحساب" }}
+            
+            *الرصيد المتبقي بعد هذه الدفعة:*
+            • بالدينار العراقي (IQD): *${Formatters.formatIqd(receipt.remainingBalanceIqd)}*
+            • بالدولار الأمريكي (USD): *${Formatters.formatUsd(receipt.remainingBalanceUsd)}*
+            ────────────────────
+            شكراً لالتزامكم بالسداد • صادر عن: *$header*
+        """.trimIndent()
+    }
+
+    fun sendPaymentReceiptViaWhatsApp(
+        context: Context,
+        officeName: String,
+        receipt: PaymentReceiptEvent
+    ) {
+        val msg = buildPaymentReceiptWhatsAppMessage(officeName, receipt)
+        openWhatsAppDirectOrShare(
+            context = context,
+            phone = receipt.debtor.phone,
+            message = msg,
+            shareTitle = "إرسال وصل قبض عبر واتساب - ${receipt.debtor.name}"
+        )
+    }
+
+    fun buildClearanceWhatsAppMessage(
+        officeName: String,
+        event: ClearanceEvent
+    ): String {
+        val header = officeName.ifBlank { DEFAULT_OFFICE }
         val lastPaymentFormatted = Formatters.formatByCurrency(
             event.lastPaymentAmount,
             event.lastPaymentCurrency
         )
         return """
+            *$header*
             *سند براءة ذمة ومخالصة مالية نهائية*
             ────────────────────
             رقم المرجع: ${event.referenceNumber}
             التاريخ: ${Formatters.formatDateTime(event.clearanceTimestamp)}
             
-            نشهد بأن السيد / السادة: *${event.debtor.name}*
+            نشهد في *$header* بأن السيد / السادة: *${event.debtor.name}*
             رقم الهاتف: ${event.debtor.phone.ifBlank { "غير مسجل" }}
             
             قد قام بتسديد كافة المستحقات والديون المسجلة عليه بالكامل، وآخرها دفعة بقيمة *$lastPaymentFormatted*.
@@ -291,19 +428,31 @@ object ExportAndBackupManager {
             
             *الرصيد المتبقي الحالي: 0 د.ع | 0 $ (ذمة مالية خالية تماماً)*
             ────────────────────
-            صادر عن: نظام سجل الديون والمحاسبة
-            $DEDICATION_TEXT
+            صادر عن: *$header*
         """.trimIndent()
     }
 
-    fun shareClearanceCertificate(context: Context, event: ClearanceEvent) {
-        val pdfFile = generateClearancePdfFile(context, event)
+    fun shareClearanceCertificate(
+        context: Context,
+        officeName: String,
+        event: ClearanceEvent
+    ) {
+        val message = buildClearanceWhatsAppMessage(officeName, event)
+        if (event.debtor.phone.isNotBlank()) {
+            openWhatsAppDirectOrShare(
+                context = context,
+                phone = event.debtor.phone,
+                message = message,
+                shareTitle = "سند براءة ذمة - ${event.debtor.name}"
+            )
+            return
+        }
+        val pdfFile = generateClearancePdfFile(context, officeName, event)
         val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
             pdfFile
         )
-        val message = buildClearanceWhatsAppMessage(event)
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "application/pdf"
             putExtra(Intent.EXTRA_STREAM, uri)
@@ -317,7 +466,12 @@ object ExportAndBackupManager {
         )
     }
 
-    fun generateClearancePdfFile(context: Context, event: ClearanceEvent): File {
+    fun generateClearancePdfFile(
+        context: Context,
+        officeName: String,
+        event: ClearanceEvent
+    ): File {
+        val headerOffice = officeName.ifBlank { DEFAULT_OFFICE }
         val document = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
         val page = document.startPage(pageInfo)
@@ -338,7 +492,8 @@ object ExportAndBackupManager {
         }
         val subHeaderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#6EE7B7")
-            textSize = 13f
+            textSize = 14f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             textAlign = Paint.Align.CENTER
         }
         val bodyBoldPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -355,8 +510,8 @@ object ExportAndBackupManager {
 
         // Top Navy Header
         canvas.drawRect(0f, 0f, 595f, 125f, navyPaint)
-        canvas.drawText("سند براءة ذمة ومخالصة مالية نهائية", 297.5f, 55f, titlePaint)
-        canvas.drawText(DEDICATION_TEXT, 297.5f, 88f, subHeaderPaint)
+        canvas.drawText(headerOffice, 297.5f, 52f, titlePaint)
+        canvas.drawText("سند براءة ذمة ومخالصة مالية نهائية", 297.5f, 88f, subHeaderPaint)
 
         // Outer Frame
         canvas.drawRoundRect(RectF(36f, 150f, 559f, 760f), 16f, 16f, borderPaint)
@@ -374,17 +529,19 @@ object ExportAndBackupManager {
 
         var y = 265f
         val rightX = 525f
+        canvas.drawText("الجهة المُصدِرة: $headerOffice", rightX, y, bodyBoldPaint)
+        y += 30f
         canvas.drawText("رقم السند المرجعي: ${event.referenceNumber}", rightX, y, bodyBoldPaint)
-        y += 32f
+        y += 30f
         canvas.drawText("تاريخ إصدار المخالصة: ${Formatters.formatDateTime(event.clearanceTimestamp)}", rightX, y, bodyPaint)
-        y += 45f
+        y += 40f
         canvas.drawText("اسم العميل / المدين: ${event.debtor.name}", rightX, y, bodyBoldPaint)
-        y += 30f
+        y += 28f
         canvas.drawText("رقم الهاتف: ${event.debtor.phone.ifBlank { "غير مسجل" }}", rightX, y, bodyPaint)
-        y += 30f
+        y += 28f
         canvas.drawText("العنوان: ${event.debtor.address.ifBlank { "غير مسجل" }}", rightX, y, bodyPaint)
 
-        y += 45f
+        y += 42f
         val boxPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#F8FAFC") }
         canvas.drawRoundRect(RectF(60f, y - 28f, 535f, y + 135f), 12f, 12f, boxPaint)
         canvas.drawRoundRect(RectF(60f, y - 28f, 535f, y + 135f), 12f, 12f, borderPaint)
@@ -400,7 +557,7 @@ object ExportAndBackupManager {
         val zeroPaint = Paint(bodyBoldPaint).apply { color = Color.parseColor("#059669") }
         canvas.drawText("الرصيد المتبقي بالعملتين حالياً: 0 د.ع | 0.00 $ (مسدد بالكامل)", 510f, y + 104f, zeroPaint)
 
-        y += 185f
+        y += 180f
         canvas.drawText("يُعد هذا السند إقراراً رسمياً ببراءة ذمة العميل المذكور أعلاه من كافة الديون المسجلة", rightX, y, bodyPaint)
         y += 26f
         canvas.drawText("سواء بالدينار العراقي أو الدولار الأمريكي حتى تاريخه، ولا توجد عليه أي مطالبات متبقية.", rightX, y, bodyPaint)
@@ -411,7 +568,7 @@ object ExportAndBackupManager {
             textSize = 12f
             textAlign = Paint.Align.CENTER
         }
-        canvas.drawText("نظام سجل الديون والمحاسبة المتكامل • $DEDICATION_TEXT", 297.5f, 805f, footerPaint)
+        canvas.drawText("صادر عن: $headerOffice • نظام سجل الديون والمحاسبة المتكامل", 297.5f, 805f, footerPaint)
 
         document.finishPage(page)
         val exportDir = File(context.cacheDir, "exports").apply { mkdirs() }
@@ -428,8 +585,10 @@ object ExportAndBackupManager {
         summaryLines: List<String>,
         tableHeaders: List<String>,
         tableRows: List<List<String>>,
-        fileNamePrefix: String
+        fileNamePrefix: String,
+        officeName: String = DEFAULT_OFFICE
     ): File {
+        val headerOffice = officeName.ifBlank { DEFAULT_OFFICE }
         val document = PdfDocument()
         val rowsPerPage = 18
         val chunks = if (tableRows.isEmpty()) listOf(emptyList()) else tableRows.chunked(rowsPerPage)
@@ -448,9 +607,10 @@ object ExportAndBackupManager {
             textSize = 12f
             textAlign = Paint.Align.RIGHT
         }
-        val dedicationPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        val officeBadgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#6EE7B7")
-            textSize = 12f
+            textSize = 13f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             textAlign = Paint.Align.LEFT
         }
         val cellBoldPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -473,7 +633,7 @@ object ExportAndBackupManager {
             canvas.drawRect(0f, 0f, 595f, 95f, navyPaint)
             canvas.drawText(title, 560f, 42f, titlePaint)
             canvas.drawText(subtitle, 560f, 68f, subPaint)
-            canvas.drawText(DEDICATION_TEXT, 35f, 42f, dedicationPaint)
+            canvas.drawText(headerOffice, 35f, 42f, officeBadgePaint)
 
             var y = 122f
             if (pageIndex == 0 && summaryLines.isNotEmpty()) {
@@ -512,7 +672,7 @@ object ExportAndBackupManager {
                 textAlign = Paint.Align.CENTER
             }
             canvas.drawText(
-                "صفحة ${pageIndex + 1} من ${chunks.size} • $DEDICATION_TEXT",
+                "صفحة ${pageIndex + 1} من ${chunks.size} • $headerOffice",
                 297.5f,
                 815f,
                 footerPaint

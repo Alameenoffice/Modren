@@ -1,11 +1,11 @@
 <resources>
     <string name="app_name">سجل الديون</string>
-    <string name="dedication_banner">صدقة جارية عن أحمد أبو رسلان</string>
+    <string name="default_office_name">مكتب المحاسبة والتجارة العامة</string>
     <string name="system_subtitle">النظام المحاسبي المتكامل لإدارة الديون والتسديدات</string>
     <string name="nav_dashboard">لوحة التحكم</string>
     <string name="nav_debtors">المدينون</string>
     <string name="nav_reports">التقارير والجرد</string>
-    <string name="nav_backup">النسخ والتصدير</string>
+    <string name="nav_backup">الإعدادات والنسخ</string>
     <string name="kpi_total_debts">إجمالي الديون المستحقة</string>
     <string name="kpi_total_paid">إجمالي التسديدات المحصلة</string>
     <string name="kpi_net_liquidity">صافي السيولة والتحصيل</string>

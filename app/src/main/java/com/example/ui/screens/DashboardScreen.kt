@@ -22,12 +22,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.WarningAmber
@@ -37,6 +40,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -48,8 +52,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.data.local.CurrencyCode
@@ -63,12 +69,14 @@ import com.example.ui.components.DebtVsPaymentInteractiveChart
 import com.example.ui.components.DualCurrencyKpiCard
 import com.example.ui.components.FinancialKpiCard
 import com.example.ui.theme.LocalLedgerColors
+import com.example.util.ExportAndBackupManager
 import com.example.util.Formatters
 import java.util.Calendar
 
 @Composable
 fun DashboardScreen(
     uiState: LedgerUiState,
+    officeName: String,
     usdToIqdRate: Double,
     showUnifiedEstimate: Boolean,
     onOpenExchangeRateDialog: () -> Unit,
@@ -79,6 +87,7 @@ fun DashboardScreen(
     onSelectFilterAndGoToDebtors: (DebtorFilter) -> Unit
 ) {
     val colors = LocalLedgerColors.current
+    val context = LocalContext.current
 
     // Compute 6-month dual-currency chart series
     val sixMonthPoints = remember(uiState.transactions) {
@@ -121,7 +130,7 @@ fun DashboardScreen(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Quick Action Bar
+        // Office Identity & Quick Action Bar
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -137,13 +146,26 @@ fun DashboardScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Business,
+                                    contentDescription = null,
+                                    tint = colors.primaryInteractive,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = officeName,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    color = colors.textPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.testTag("dashboard_office_name_title")
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "لوحة التحكم المالية المركزية (IQD | USD)",
-                                style = MaterialTheme.typography.headlineMedium,
-                                color = colors.textPrimary
-                            )
-                            Text(
-                                text = "فصل محاسبي دقيق بين الدينار العراقي (د.ع) والدولار الأمريكي ($)",
+                                text = "لوحة التحكم المالية المركزية • فصل محاسبي تام (د.ع IQD | $ USD)",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.textSecondary
                             )
@@ -162,10 +184,10 @@ fun DashboardScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    Icons.Default.CurrencyExchange,
-                                    contentDescription = "سعر الصرف",
+                                    Icons.Default.Edit,
+                                    contentDescription = "تعديل اسم المكتب وسعر الصرف",
                                     tint = colors.primaryInteractive,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(14.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
@@ -185,11 +207,15 @@ fun DashboardScreen(
                     ) {
                         Button(
                             onClick = {
-                                onOpenRecordTransaction(
-                                    null,
-                                    TransactionType.PAYMENT,
-                                    CurrencyCode.IQD
-                                )
+                                if (uiState.debtors.isEmpty()) {
+                                    onOpenAddDebtor()
+                                } else {
+                                    onOpenRecordTransaction(
+                                        null,
+                                        TransactionType.PAYMENT,
+                                        CurrencyCode.IQD
+                                    )
+                                }
                             },
                             modifier = Modifier
                                 .weight(1f)
@@ -224,6 +250,71 @@ fun DashboardScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("إضافة مدين جديد", color = colors.primaryInteractive)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Elegant Empty State Banner when the ledger is completely empty (Clean State)
+        if (uiState.debtors.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("clean_empty_state_card"),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = colors.cardSurface),
+                    border = BorderStroke(1.5.dp, colors.primaryInteractive.copy(alpha = 0.45f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape)
+                                .background(colors.primaryInteractiveSoft),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PersonAdd,
+                                contentDescription = null,
+                                tint = colors.primaryInteractive,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "سجل الديون فارغ وجاهز للعمل",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = colors.textPrimary,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "جميع الأرصدة الآن (0 د.ع | 0 $). ابدأ بإضافة أول مدين لتسجيل الديون، الدفعات، وإرسال وصولات القبض والمطالبات عبر واتساب باسم «$officeName».",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.textSecondary,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = onOpenAddDebtor,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .testTag("empty_state_add_first_debtor_button"),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = colors.primaryInteractive)
+                        ) {
+                            Icon(Icons.Default.PersonAdd, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("إضافة أول مدين الآن", color = Color.White, style = MaterialTheme.typography.titleSmall)
                         }
                     }
                 }
@@ -343,7 +434,7 @@ fun DashboardScreen(
                         }
                         Icon(
                             Icons.Default.Settings,
-                            contentDescription = "تعديل سعر الصرف",
+                            contentDescription = "تعديل اسم المكتب وسعر الصرف",
                             tint = colors.textMuted,
                             modifier = Modifier.size(18.dp)
                         )
@@ -411,9 +502,12 @@ fun DashboardScreen(
 
                     if (priorityDebtors.isEmpty()) {
                         Text(
-                            text = "جميع الحسابات مسددة بالكامل حالياً.",
+                            text = if (uiState.debtors.isEmpty())
+                                "لا يوجد مدينون مسجلون حالياً. اضغط على «إضافة مدين جديد» للبدء."
+                            else
+                                "جميع الحسابات مسددة بالكامل حالياً.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = colors.paymentEmerald,
+                            color = if (uiState.debtors.isEmpty()) colors.textSecondary else colors.paymentEmerald,
                             modifier = Modifier.padding(vertical = 12.dp)
                         )
                     } else {
@@ -458,7 +552,7 @@ fun DashboardScreen(
                                                     )
                                                     Spacer(modifier = Modifier.width(3.dp))
                                                     Text(
-                                                        text = "متأخر",
+                                                        text = "متأخر عن السداد",
                                                         style = MaterialTheme.typography.labelSmall,
                                                         color = colors.debtCrimson
                                                     )
@@ -479,37 +573,60 @@ fun DashboardScreen(
                                     CurrencyCode.USD
                                 }
 
-                                Surface(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .clickable {
-                                            onOpenRecordTransaction(
-                                                summary.debtor.id,
-                                                TransactionType.PAYMENT,
-                                                preferredCurrency
-                                            )
-                                        }
-                                        .testTag("dashboard_settle_debtor_${summary.debtor.id}"),
-                                    color = colors.paymentEmeraldSoft,
-                                    shape = RoundedCornerShape(10.dp),
-                                    border = BorderStroke(1.dp, colors.paymentEmerald)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                                    IconButton(
+                                        onClick = {
+                                            ExportAndBackupManager.sendDebtReminderViaWhatsApp(
+                                                context = context,
+                                                officeName = officeName,
+                                                summary = summary
+                                            )
+                                        },
+                                        modifier = Modifier.size(34.dp)
                                     ) {
                                         Icon(
-                                            Icons.Default.DoneAll,
-                                            contentDescription = null,
+                                            Icons.Default.Share,
+                                            contentDescription = "تذكير واتساب",
                                             tint = colors.paymentEmerald,
-                                            modifier = Modifier.size(16.dp)
+                                            modifier = Modifier.size(18.dp)
                                         )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = "تسديد",
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = colors.paymentEmerald
-                                        )
+                                    }
+
+                                    Surface(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .clickable {
+                                                onOpenRecordTransaction(
+                                                    summary.debtor.id,
+                                                    TransactionType.PAYMENT,
+                                                    preferredCurrency
+                                                )
+                                            }
+                                            .testTag("dashboard_settle_debtor_${summary.debtor.id}"),
+                                        color = colors.paymentEmeraldSoft,
+                                        shape = RoundedCornerShape(10.dp),
+                                        border = BorderStroke(1.dp, colors.paymentEmerald)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                Icons.Default.DoneAll,
+                                                contentDescription = null,
+                                                tint = colors.paymentEmerald,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = "تسديد",
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = colors.paymentEmerald
+                                            )
+                                        }
                                     }
                                 }
                             }

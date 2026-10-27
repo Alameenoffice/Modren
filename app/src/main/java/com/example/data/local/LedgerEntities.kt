@@ -43,6 +43,7 @@ data class DebtorSummary(
     val lastTransactionDate: Long?,
     val transactionCount: Int,
     val isOverdue: Boolean,
+    val overdueDays: Int = 0,
     val isOverLimit: Boolean,
     val isSettled: Boolean
 ) {
@@ -64,4 +65,15 @@ data class ClearanceEvent(
     val lastPaymentCurrency: String,
     val clearanceTimestamp: Long,
     val referenceNumber: String
+)
+
+data class PaymentReceiptEvent(
+    val debtor: DebtorEntity,
+    val paymentAmount: Double,
+    val currency: String,
+    val note: String,
+    val timestamp: Long,
+    val remainingBalanceIqd: Double,
+    val remainingBalanceUsd: Double,
+    val receiptNumber: String
 )

@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 class LedgerDatabase private constructor(context: Context) :
-    SQLiteOpenHelper(context.applicationContext, "debt_ledger_native_v2.db", null, 2),
+    SQLiteOpenHelper(context.applicationContext, "debt_ledger_clean_v3.db", null, 3),
     LedgerDao {
 
     private val debtorsFlow = MutableStateFlow<List<DebtorEntity>>(emptyList())
@@ -303,6 +303,17 @@ class LedgerDatabase private constructor(context: Context) :
             refreshFlowsSync()
         }
 
+    override suspend fun updateTransaction(transaction: LedgerTransactionEntity) =
+        withContext(Dispatchers.IO) {
+            writableDatabase.update(
+                "transactions",
+                txToContentValues(transaction, includeId = false),
+                "id = ?",
+                arrayOf(transaction.id.toString())
+            )
+            refreshFlowsSync()
+        }
+
     override suspend fun deleteTransaction(transaction: LedgerTransactionEntity) {
         deleteTransactionById(transaction.id)
     }
@@ -319,6 +330,19 @@ class LedgerDatabase private constructor(context: Context) :
 
     override suspend fun clearAllDebtors() = withContext(Dispatchers.IO) {
         writableDatabase.delete("debtors", null, null)
+        refreshFlowsSync()
+    }
+
+    override suspend fun clearAllData() = withContext(Dispatchers.IO) {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            db.delete("transactions", null, null)
+            db.delete("debtors", null, null)
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
         refreshFlowsSync()
     }
 

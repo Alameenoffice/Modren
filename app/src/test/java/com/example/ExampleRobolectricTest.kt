@@ -20,19 +20,20 @@ import org.robolectric.annotation.Config
 class ExampleRobolectricTest {
 
     @Test
-    fun `read app name and dedication string from context`() {
+    fun `read app name and default office name from context`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val appName = context.getString(R.string.app_name)
-        val dedication = context.getString(R.string.dedication_banner)
+        val defaultOfficeName = context.getString(R.string.default_office_name)
         assertEquals("سجل الديون", appName)
-        assertEquals("صدقة جارية عن أحمد أبو رسلان", dedication)
+        assertEquals("مكتب المحاسبة والتجارة العامة", defaultOfficeName)
     }
 
     @Test
-    fun `dual currency formatting and json backup round-trip`() {
+    fun `dual currency formatting and json backup round-trip with office name`() {
         assertEquals("250,000 د.ع", Formatters.formatIqd(250000.0))
         assertEquals("1,500 $", Formatters.formatUsd(1500.0))
 
+        val officeName = "شركة النور للتجارة العامة"
         val debtors = listOf(
             DebtorEntity(
                 id = 10L,
@@ -62,8 +63,12 @@ class ExampleRobolectricTest {
             )
         )
 
-        val json = ExportAndBackupManager.exportDatabaseToJson(debtors, transactions)
-        assertTrue(json.contains("صدقة جارية عن أحمد أبو رسلان"))
+        val json = ExportAndBackupManager.exportDatabaseToJson(
+            debtors = debtors,
+            transactions = transactions,
+            officeName = officeName
+        )
+        assertTrue(json.contains(officeName))
 
         val (restoredDebtors, restoredTxs) = ExportAndBackupManager.parseDatabaseFromJson(json)
         assertEquals(1, restoredDebtors.size)

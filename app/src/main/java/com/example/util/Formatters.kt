@@ -13,6 +13,7 @@ object Formatters {
     private val currencyNumberFormat = DecimalFormat("#,##0.##", englishSymbols)
     private val iqdNumberFormat = DecimalFormat("#,##0", englishSymbols)
     private val dateFormatter = SimpleDateFormat("yyyy/MM/dd", Locale.US)
+    private val inputDateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.US)
     private val timeFormatter = SimpleDateFormat("hh:mm a", Locale("ar"))
     private val dateTimeFormatter = SimpleDateFormat("yyyy/MM/dd - hh:mm a", Locale("ar"))
 
@@ -37,6 +38,13 @@ object Formatters {
         }
     }
 
+    fun formatDualBalanceText(balanceIqd: Double, balanceUsd: Double): String {
+        val parts = mutableListOf<String>()
+        if (balanceIqd > 0.009) parts.add(formatIqd(balanceIqd))
+        if (balanceUsd > 0.009) parts.add(formatUsd(balanceUsd))
+        return if (parts.isEmpty()) "0 د.ع | 0 $" else parts.joinToString(" و ")
+    }
+
     fun formatMoney(amount: Double, currencySymbol: String = "د.ع"): String {
         val formatted = currencyNumberFormat.format(amount)
         return "$formatted $currencySymbol"
@@ -57,6 +65,38 @@ object Formatters {
     fun formatDate(millis: Long?): String {
         if (millis == null || millis <= 0L) return "غير محدد"
         return dateFormatter.format(Date(millis))
+    }
+
+    fun formatInputDate(millis: Long?): String {
+        if (millis == null || millis <= 0L) return ""
+        return inputDateFormatter.format(Date(millis))
+    }
+
+    fun parseInputDateToMillis(dateStr: String): Long? {
+        val clean = dateStr.trim().replace("/", "-")
+        if (clean.isBlank()) return null
+        return try {
+            inputDateFormatter.parse(clean)?.time
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun calculateDaysOverdue(dueDateMillis: Long?, nowMillis: Long = System.currentTimeMillis()): Int {
+        if (dueDateMillis == null || dueDateMillis >= nowMillis) return 0
+        val diff = nowMillis - dueDateMillis
+        return ((diff / (24L * 60L * 60L * 1000L)).toInt()).coerceAtLeast(1)
+    }
+
+    fun normalizePhoneForWhatsApp(rawPhone: String): String {
+        val digits = rawPhone.filter { it.isDigit() }
+        if (digits.isEmpty()) return ""
+        return when {
+            digits.startsWith("00") -> digits.substring(2)
+            digits.startsWith("07") && digits.length == 11 -> "964" + digits.substring(1)
+            digits.startsWith("7") && digits.length == 10 -> "964$digits"
+            else -> digits
+        }
     }
 
     fun formatTime(millis: Long): String {

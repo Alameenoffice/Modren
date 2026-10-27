@@ -83,6 +83,7 @@ import java.util.Calendar
 @Composable
 fun ReportsScreen(
     uiState: LedgerUiState,
+    officeName: String,
     onOpenDebtorProfile: (Long) -> Unit
 ) {
     val colors = LocalLedgerColors.current
@@ -462,6 +463,7 @@ fun ReportsScreen(
                         OutlinedButton(
                             onClick = {
                                 val csv = ExportAndBackupManager.buildReportCsv(
+                                    officeName = officeName,
                                     reportTitle = selectedTab.labelAr,
                                     transactions = activeReportTransactions,
                                     debtorMap = uiState.debtorMap
@@ -488,6 +490,7 @@ fun ReportsScreen(
                             onClick = {
                                 val pdf = ExportAndBackupManager.generateStatementOrReportPdfFile(
                                     context = context,
+                                    officeName = officeName,
                                     title = "تقرير: ${selectedTab.labelAr}",
                                     subtitle = "عدد العمليات: ${activeReportTransactions.size}",
                                     summaryLines = listOf(
