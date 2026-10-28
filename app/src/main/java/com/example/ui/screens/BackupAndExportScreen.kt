@@ -138,7 +138,7 @@ fun BackupAndExportScreen(
         modifier = Modifier
             .fillMaxSize()
             .testTag("backup_and_export_screen"),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // 1. Cloud Account & Automatic Sync Card (Clean Arabic)
@@ -168,7 +168,7 @@ fun BackupAndExportScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "حساب المكتب والحفظ السحابي الآمن",
+                                text = "حساب المكتب والحفظ التلقائي",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = colors.textPrimary,
                                 fontWeight = FontWeight.Bold
@@ -177,11 +177,6 @@ fun BackupAndExportScreen(
                                 text = "البريد المسجل: ${userEmail.ifBlank { "حساب مكتب نشط" }}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.textSecondary
-                            )
-                            Text(
-                                text = "حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = colors.textMuted
                             )
                         }
                     }

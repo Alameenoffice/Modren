@@ -3,13 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#0F172A" />
-  <title>تطبيق سجل الديون والمحاسبة الاحترافي</title>
+  <meta name="theme-color" content="#F8FAFC" />
+  <title>سجل الديون</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
 
+  <!-- Real Lottie Player (lottie-web via CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+
+  <!-- Firebase Cloud Auth + Firestore SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -53,106 +57,108 @@
       --amber-soft: #78350F;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
-    body { background: var(--bg); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
-    .office-top-ribbon {
-      background: #0F172A; color: #6EE7B7; padding: 8px 18px; font-size: 0.88rem; font-weight: 700;
-      display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08);
-      cursor: pointer;
-    }
-    .app-shell { display: flex; flex: 1; min-height: calc(100vh - 38px); }
+    body { background: var(--bg); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 96px; }
+    .app-shell { display: flex; flex: 1; min-height: 100vh; }
     .sidebar {
-      width: 265px; background: var(--sidebar); color: #fff; padding: 20px 14px;
+      width: 260px; background: var(--sidebar); color: #fff; padding: 20px 14px;
       display: flex; flex-direction: column; justify-content: space-between; transition: width 0.25s;
     }
     .brand { display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin-bottom: 20px; }
     .brand-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--primary); display: grid; place-items: center; font-weight: 700; flex-shrink: 0; }
     .nav-item {
       display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px;
-      color: #CBD5E1; cursor: pointer; font-weight: 600; margin-bottom: 6px; border: none; background: transparent; width: 100%; text-align: right; font-size: 0.95rem;
+      color: #CBD5E1; cursor: pointer; font-weight: 600; margin-bottom: 6px; border: none; background: transparent; width: 100%; text-align: right; font-size: 0.95rem; white-space: nowrap;
     }
     .nav-item.active, .nav-item:hover { background: var(--primary); color: #fff; }
     .main-area { flex: 1; display: flex; flex-direction: column; overflow-x: hidden; }
     .topbar {
-      background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 22px;
-      display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+      background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
     }
     .btn {
-      padding: 8px 15px; border-radius: 10px; font-weight: 600; cursor: pointer; border: 1px solid transparent;
-      display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; transition: 0.15s; text-decoration: none;
+      padding: 8px 14px; border-radius: 10px; font-weight: 600; cursor: pointer; border: 1px solid transparent;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.88rem;
+      transition: 0.15s; text-decoration: none; white-space: nowrap; flex-shrink: 0;
     }
     .btn-primary { background: var(--primary); color: #fff; }
     .btn-emerald { background: var(--emerald); color: #fff; }
     .btn-crimson { background: var(--crimson); color: #fff; }
     .btn-outline { background: transparent; border-color: var(--border); color: var(--text-primary); }
-    .btn-sm { padding: 5px 10px; font-size: 0.8rem; border-radius: 8px; }
-    .content { padding: 22px; max-width: 1380px; width: 100%; margin: 0 auto; }
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 22px; }
+    .btn-sm { padding: 6px 10px; font-size: 0.82rem; border-radius: 9px; white-space: nowrap; }
+    .icon-tool-btn {
+      width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--surface-elevated); color: var(--text-primary); display: inline-grid;
+      place-items: center; cursor: pointer; font-size: 1rem; transition: 0.15s;
+    }
+    .content { padding: 20px 20px 96px; max-width: 1380px; width: 100%; margin: 0 auto; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(265px, 1fr)); gap: 16px; margin-bottom: 22px; }
     .card {
       background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
       padding: 18px; box-shadow: var(--shadow);
     }
-    .badge { padding: 4px 10px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; display: inline-block; }
+    .badge { padding: 4px 10px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; display: inline-block; white-space: nowrap; }
     .badge-iqd { background: var(--primary-soft); color: var(--primary); }
     .badge-usd { background: var(--emerald-soft); color: var(--emerald); }
     .badge-crimson { background: var(--crimson-soft); color: var(--crimson); }
     .badge-amber { background: var(--amber-soft); color: var(--amber); }
     table { width: 100%; border-collapse: collapse; margin-top: 12px; }
     th, td { padding: 11px 12px; border-bottom: 1px solid var(--border); text-align: right; font-size: 0.9rem; }
-    th { background: var(--surface-elevated); color: var(--text-secondary); font-weight: 700; }
+    th { background: var(--surface-elevated); color: var(--text-secondary); font-weight: 700; white-space: nowrap; }
     input, select {
       width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
       background: var(--surface); color: var(--text-primary); margin-top: 4px; margin-bottom: 10px;
     }
     .modal-backdrop {
-      position: fixed; inset: 0; background: rgba(15,23,42,0.74); display: none;
+      position: fixed; inset: 0; background: rgba(15,23,42,0.68); display: none;
       place-items: center; z-index: 1000; padding: 16px;
     }
     .modal-backdrop.open { display: grid; }
-    .modal { background: var(--surface); border-radius: 20px; max-width: 520px; width: 100%; padding: 22px; border: 1px solid var(--border); max-height: 92vh; overflow-y: auto; }
+    .modal { background: var(--surface); border-radius: 20px; max-width: 500px; width: 100%; padding: 22px; border: 1px solid var(--border); max-height: 92vh; overflow-y: auto; }
     .empty-box {
       text-align: center; padding: 38px 20px; border: 2px dashed var(--border); border-radius: 18px;
       background: var(--surface); margin: 16px 0;
     }
 
-    /* Animated Welcome Onboarding & Cloud Auth Screen Overlays */
+    /* Clean Minimalist Real Lottie JSON Onboarding & Auth Overlays */
     #welcomeOnboardingOverlay, #cloudAuthOverlay {
-      position: fixed; inset: 0; background: radial-gradient(circle at top right, #132A4A 0%, #0F172A 55%, #090E1A 100%);
-      z-index: 3000; display: none; place-items: center; padding: 16px; overflow-y: auto;
+      position: fixed; inset: 0; background: #F8FAFC;
+      z-index: 3000; display: none; place-items: center; padding: 18px; overflow-y: auto;
+    }
+    [data-theme="dark"] #welcomeOnboardingOverlay, [data-theme="dark"] #cloudAuthOverlay {
+      background: #0B1120;
     }
     #welcomeOnboardingOverlay.open, #cloudAuthOverlay.open { display: grid; }
-    .welcome-card {
-      background: rgba(17, 28, 51, 0.96); color: #fff; border-radius: 26px; max-width: 550px; width: 100%;
-      padding: 24px; border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-      text-align: center; animation: fadeInCard 0.45s ease-out;
+    .welcome-minimal-container {
+      max-width: 460px; width: 100%; min-height: 86vh; display: flex; flex-direction: column;
+      justify-content: space-between; align-items: center; text-align: center; padding: 12px 6px;
     }
-    @keyframes fadeInCard {
-      from { opacity: 0; transform: translateY(14px) scale(0.98); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+    .lottie-stage-box {
+      width: 260px; height: 260px; margin: 0 auto 22px; display: grid; place-items: center;
     }
-    @keyframes floatPulse {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-6px) scale(1.05); }
+    .slide-dot {
+      width: 9px; height: 9px; border-radius: 99px; background: #CBD5E1;
+      display: inline-block; cursor: pointer; transition: 0.25s;
     }
-    .welcome-hero-icon {
-      width: 76px; height: 76px; border-radius: 50%; margin: 12px auto;
-      background: linear-gradient(135deg, rgba(16,185,129,0.28), rgba(37,99,235,0.22));
-      display: grid; place-items: center; font-size: 2rem; color: #6EE7B7;
-      border: 1px solid rgba(110,231,183,0.4); animation: floatPulse 3s infinite ease-in-out;
+    .slide-dot.active { width: 28px; background: var(--primary); }
+
+    /* Compact Elegant Developer Footer */
+    .compact-dev-footer {
+      width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 999px;
+      padding: 7px 14px; font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;
     }
-    .dev-credit-box {
-      background: rgba(15, 23, 42, 0.92); border: 1.5px solid rgba(16, 185, 129, 0.55);
-      border-radius: 18px; padding: 15px; margin-top: 14px; text-align: center; color: #fff;
+    .compact-dev-icons { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .compact-dev-icon-link {
+      width: 28px; height: 28px; border-radius: 50%; display: inline-grid; place-items: center;
+      text-decoration: none; font-size: 0.85rem; transition: transform 0.15s;
     }
-    .dev-credit-light {
-      background: var(--surface-elevated); border: 1.5px solid rgba(16, 185, 129, 0.5);
-      border-radius: 18px; padding: 15px; margin-top: 14px; text-align: center; color: var(--text-primary);
-    }
+    .compact-dev-icon-link:hover { transform: scale(1.06); }
+    .compact-dev-call { background: rgba(37, 99, 235, 0.12); color: #2563EB; border: 1px solid rgba(37, 99, 235, 0.3); }
+    .compact-dev-wa { background: rgba(16, 185, 129, 0.14); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.35); }
+
     .auth-card {
-      background: var(--surface); color: var(--text-primary); border-radius: 24px; max-width: 500px; width: 100%;
-      overflow: hidden; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-    }
-    .auth-header {
-      background: linear-gradient(135deg, #0F172A, #1E3A8A); color: #fff; text-align: center; padding: 24px 20px;
+      background: var(--surface); color: var(--text-primary); border-radius: 24px; max-width: 480px; width: 100%;
+      overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow); padding: 24px 20px;
     }
     .auth-tabs {
       display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--surface-elevated);
@@ -160,21 +166,18 @@
     }
     .auth-tab-btn {
       padding: 10px; border-radius: 9px; border: none; font-weight: 700; cursor: pointer;
-      background: transparent; color: var(--text-secondary); font-size: 0.88rem;
+      background: transparent; color: var(--text-secondary); font-size: 0.88rem; white-space: nowrap;
     }
     .auth-tab-btn.active { background: var(--primary); color: #fff; }
-    .slide-dot {
-      width: 9px; height: 9px; border-radius: 99px; background: rgba(255,255,255,0.28);
-      display: inline-block; cursor: pointer; transition: 0.25s;
+    .debtor-actions-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px;
     }
-    .slide-dot.active { width: 26px; background: #10B981; }
     @media (max-width: 768px) {
       .sidebar { display: none; }
       .mobile-nav {
         display: flex !important; position: fixed; bottom: 0; right: 0; left: 0;
         background: var(--surface); border-top: 1px solid var(--border); padding: 8px; justify-content: space-around; z-index: 90;
       }
-      body { padding-bottom: 66px; }
     }
     .mobile-nav { display: none; }
     @media print {
@@ -186,119 +189,107 @@
 </head>
 <body>
 
-  <!-- 0. INTERACTIVE ANIMATED WELCOME ONBOARDING SCREEN (100% Offline Ready) -->
+  <!-- 0. CLEAN MINIMALIST REAL LOTTIE JSON ANIMATED ONBOARDING -->
   <div id="welcomeOnboardingOverlay">
-    <div class="welcome-card">
-      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.45);color:#6EE7B7;padding:5px 14px;border-radius:99px;font-size:0.8rem;font-weight:700">
-        ✨ حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت
+    <div class="welcome-minimal-container">
+      <div style="width:100%;display:flex;justify-content:flex-end">
+        <button class="btn btn-sm" style="background:transparent;color:var(--text-muted)" onclick="startNowFromWelcome()">تخطي</button>
       </div>
 
-      <div class="welcome-hero-icon" id="welcomeSlideIcon">💼</div>
-      <div id="welcomeSlideBadge" style="color:#10B981;font-weight:700;font-size:0.86rem">مرحباً بك في النظام المتكامل</div>
-      <h2 id="welcomeSlideTitle" style="font-size:1.35rem;margin:6px 0 8px;color:#fff">تطبيق سجل الديون والمحاسبة الاحترافي</h2>
-      <p id="welcomeSlideDesc" style="font-size:0.9rem;color:#CBD5E1;line-height:1.65;margin-bottom:14px">
-        نظام محاسبي متكامل مصمم خصيصاً لأصحاب المكاتب والشركات والتجار لإدارة الحسابات والذمم المالية بأعلى درجات الدقة والوضوح.
-      </p>
+      <div style="width:100%">
+        <!-- 260x260px Real Lottie JSON Scene Container -->
+        <div id="lottieSceneContainer" class="lottie-stage-box"></div>
 
-      <div id="welcomeSlidePoints" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 14px;text-align:right;font-size:0.84rem;color:#F1F5F9;display:flex;flex-direction:column;gap:7px">
-      </div>
+        <h2 id="welcomeSlideTitle" style="font-size:1.45rem;margin:0 0 10px;color:var(--text-primary);font-weight:700">
+          إدارة ديونك وحساباتك بكل ذكاء
+        </h2>
+        <p id="welcomeSlideDesc" style="font-size:0.95rem;color:var(--text-secondary);line-height:1.65;max-width:400px;margin:0 auto">
+          نظام محاسبي متكامل يدعم الدينار العراقي والدولار الأمريكي مع تصريف تلقائي دقيق.
+        </p>
 
-      <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0">
-        <button class="btn btn-outline btn-sm" style="color:#CBD5E1;border-color:rgba(255,255,255,0.2)" onclick="changeWelcomeSlide(-1)">◀ السابق</button>
-        <div style="display:flex;gap:6px;align-items:center" id="welcomeDotsContainer">
+        <div style="display:flex;justify-content:center;gap:8px;align-items:center;margin:26px 0" id="welcomeDotsContainer">
           <span class="slide-dot active" onclick="setWelcomeSlide(0)"></span>
           <span class="slide-dot" onclick="setWelcomeSlide(1)"></span>
           <span class="slide-dot" onclick="setWelcomeSlide(2)"></span>
         </div>
-        <button class="btn btn-outline btn-sm" style="color:#6EE7B7;border-color:rgba(110,231,183,0.35)" onclick="changeWelcomeSlide(1)">التالي ▶</button>
-      </div>
 
-      <!-- Prominent Developer Credit Card -->
-      <div class="dev-credit-box">
-        <div style="font-weight:700;font-size:0.98rem;color:#fff">تم التصميم والتطوير بواسطة: أحمد أبو رسلان</div>
-        <div style="font-size:0.82rem;color:#6EE7B7;font-weight:700;margin:4px 0 10px">للتواصل والدعم الفني: 07512362567</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <a href="tel:07512362567" class="btn btn-primary" style="justify-content:center">📞 اتصال مباشر</a>
-          <a href="https://wa.me/9647512362567" target="_blank" rel="noopener" class="btn btn-emerald" style="justify-content:center">💬 واتساب مباشر</a>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <button class="btn btn-outline btn-sm" onclick="changeWelcomeSlide(-1)">السابق</button>
+          <button class="btn btn-primary" style="flex:1;padding:12px;border-radius:14px;font-size:1rem" onclick="startNowFromWelcome()">
+            البدء الآن
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="changeWelcomeSlide(1)">التالي</button>
         </div>
       </div>
 
-      <button class="btn btn-emerald" style="width:100%;justify-content:center;padding:13px;font-size:1.02rem;margin-top:16px;border-radius:14px" onclick="startNowFromWelcome()">
-        🚀 البدء الآن
-      </button>
+      <!-- Compact Elegant Developer Footer -->
+      <div class="compact-dev-footer" style="margin-top:18px">
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">تصميم وتطوير: أحمد أبو رسلان | 07512362567</span>
+        <span class="compact-dev-icons">
+          <a href="tel:07512362567" class="compact-dev-icon-link compact-dev-call" title="اتصال مباشر">📞</a>
+          <a href="https://wa.me/9647512362567" target="_blank" rel="noopener" class="compact-dev-icon-link compact-dev-wa" title="واتساب مباشر">💬</a>
+        </span>
+      </div>
     </div>
   </div>
 
-  <!-- 1. ACCOUNT SIGN UP / SIGN IN SCREEN -->
+  <!-- 1. CLEAN ACCOUNT SIGN UP / SIGN IN SCREEN -->
   <div id="cloudAuthOverlay">
     <div class="auth-card">
-      <div class="auth-header">
-        <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.14);display:grid;place-items:center;margin:0 auto 10px;font-size:1.35rem;color:#6EE7B7;font-weight:700">د/$</div>
-        <h2 style="font-size:1.25rem">تطبيق سجل الديون والمحاسبة الاحترافي</h2>
-        <p style="font-size:0.82rem;color:#CBD5E1;margin-top:4px">حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت</p>
-        <button class="btn btn-outline btn-sm" style="margin-top:8px;color:#6EE7B7;border-color:rgba(110,231,183,0.4)" onclick="reopenWelcomeScreen()">✨ عرض جولة الترحيب ومميزات التطبيق</button>
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="width:54px;height:54px;border-radius:16px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;margin:0 auto 10px;font-size:1.25rem;font-weight:700">د/$</div>
+        <h2 style="font-size:1.25rem;color:var(--text-primary)">نظام سجل الديون والمحاسبة</h2>
+        <button class="btn btn-sm" style="margin-top:4px;background:transparent;color:var(--primary)" onclick="reopenWelcomeScreen()">عرض جولة الترحيب التعريفية</button>
       </div>
-      <div style="padding:20px">
-        <div class="auth-tabs">
-          <button class="auth-tab-btn active" id="tabBtnSignUp" onclick="setAuthMode('SIGNUP')">إنشاء حساب مكتب جديد</button>
-          <button class="auth-tab-btn" id="tabBtnSignIn" onclick="setAuthMode('SIGNIN')">تسجيل الدخول</button>
-        </div>
 
-        <div id="signUpExtraFields">
-          <label>اسم المكتب أو الشركة أو التاجر *</label>
-          <input type="text" id="authOfficeName" placeholder="مثال: شركة الميزان للتجارة العامة" />
-          <label>سعر صرف الدولار مقابل الدينار العراقي (1$ = ? د.ع) *</label>
-          <input type="number" id="authExchangeRate" value="1500" placeholder="1500" />
-        </div>
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" id="tabBtnSignUp" onclick="setAuthMode('SIGNUP')">إنشاء حساب جديد</button>
+        <button class="auth-tab-btn" id="tabBtnSignIn" onclick="setAuthMode('SIGNIN')">تسجيل الدخول</button>
+      </div>
 
-        <label>البريد الإلكتروني *</label>
-        <input type="email" id="authEmail" placeholder="example@company.com" />
+      <div id="signUpExtraFields">
+        <label>اسم المكتب أو الشركة أو التاجر *</label>
+        <input type="text" id="authOfficeName" placeholder="مثال: شركة الميزان للتجارة العامة" />
+        <label>سعر صرف الدولار مقابل الدينار العراقي (1$ = ? د.ع) *</label>
+        <input type="number" id="authExchangeRate" value="1500" placeholder="1500" />
+      </div>
 
-        <label>كلمة المرور (6 أحرف أو أرقام فأكثر) *</label>
-        <input type="password" id="authPassword" placeholder="••••••••" />
+      <label>البريد الإلكتروني *</label>
+      <input type="email" id="authEmail" placeholder="example@company.com" />
 
-        <div id="forgotPasswordRow" style="display:none;text-align:left;margin-bottom:8px">
-          <button class="btn btn-outline btn-sm" onclick="handlePasswordReset()">نسيت كلمة المرور؟ استعادة عبر البريد</button>
-        </div>
+      <label>كلمة المرور (6 أحرف أو أرقام فأكثر) *</label>
+      <input type="password" id="authPassword" placeholder="••••••••" />
 
-        <div id="authErrorBox" style="display:none;background:var(--crimson-soft);color:var(--crimson);padding:10px 12px;border-radius:10px;font-size:0.84rem;font-weight:700;margin-bottom:10px"></div>
-        <div id="authInfoBox" style="display:none;background:var(--emerald-soft);color:var(--emerald);padding:10px 12px;border-radius:10px;font-size:0.84rem;font-weight:700;margin-bottom:10px"></div>
+      <div id="forgotPasswordRow" style="display:none;text-align:left;margin-bottom:8px">
+        <button class="btn btn-outline btn-sm" onclick="handlePasswordReset()">نسيت كلمة المرور؟ استعادة عبر البريد</button>
+      </div>
 
-        <button class="btn btn-emerald" id="authSubmitBtn" style="width:100%;justify-content:center;padding:12px;font-size:0.96rem" onclick="submitCloudAuth()">
-          إنشاء حساب مكتب جديد والبدء بسجل نظيف
-        </button>
+      <div id="authErrorBox" style="display:none;background:var(--crimson-soft);color:var(--crimson);padding:10px 12px;border-radius:10px;font-size:0.84rem;font-weight:700;margin-bottom:10px"></div>
+      <div id="authInfoBox" style="display:none;background:var(--emerald-soft);color:var(--emerald);padding:10px 12px;border-radius:10px;font-size:0.84rem;font-weight:700;margin-bottom:10px"></div>
 
-        <p style="text-align:center;font-size:0.77rem;color:var(--text-muted);margin-top:12px">
-          جميع حساباتك وسجلاتك محفوظة بأمان تام وخاصة بمكتبك فقط، ويمكنك فتحها من أي هاتف آخر في أي وقت.
-        </p>
+      <button class="btn btn-emerald" id="authSubmitBtn" style="width:100%;padding:12px;font-size:0.96rem;border-radius:12px" onclick="submitCloudAuth()">
+        إنشاء حساب مكتب جديد
+      </button>
 
-        <!-- Developer Credit Card in Auth Footer -->
-        <div class="dev-credit-light">
-          <div style="font-weight:700;font-size:0.92rem">تم التصميم والتطوير بواسطة: أحمد أبو رسلان</div>
-          <div style="font-size:0.8rem;color:var(--emerald);font-weight:700;margin:4px 0 8px">رقم الهاتف والدعم الفني: 07512362567</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <a href="tel:07512362567" class="btn btn-primary btn-sm" style="justify-content:center">📞 اتصال مباشر</a>
-            <a href="https://wa.me/9647512362567" target="_blank" rel="noopener" class="btn btn-emerald btn-sm" style="justify-content:center">💬 واتساب مباشر</a>
-          </div>
-        </div>
+      <div class="compact-dev-footer" style="margin-top:18px">
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">تصميم وتطوير: أحمد أبو رسلان | 07512362567</span>
+        <span class="compact-dev-icons">
+          <a href="tel:07512362567" class="compact-dev-icon-link compact-dev-call" title="اتصال مباشر">📞</a>
+          <a href="https://wa.me/9647512362567" target="_blank" rel="noopener" class="compact-dev-icon-link compact-dev-wa" title="واتساب مباشر">💬</a>
+        </span>
       </div>
     </div>
   </div>
 
   <!-- 2. MAIN APPLICATION SHELL -->
-  <div class="office-top-ribbon" onclick="openOfficeSettingsModal()" title="اضغط لتعديل اسم المكتب وسعر الصرف">
-    <span>🏢 <span id="ribbonOfficeName">مكتب المحاسبة والتجارة العامة</span> ✎</span>
-    <span id="topRibbonSummary">0 د.ع | 0 $</span>
-  </div>
-
   <div class="app-shell">
     <aside class="sidebar">
       <div>
         <div class="brand">
           <div class="brand-icon">د/$</div>
-          <div>
-            <div id="sidebarOfficeName" style="font-weight:700;font-size:1.02rem">مكتب المحاسبة والتجارة العامة</div>
-            <div id="sidebarUserEmail" style="font-size:0.74rem;color:#6EE7B7">حفظ سحابي آمن ومزامنة تلقائية</div>
+          <div style="overflow:hidden">
+            <div id="sidebarOfficeName" style="font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">مكتب المحاسبة والتجارة العامة</div>
+            <div id="sidebarUserEmail" style="font-size:0.74rem;color:#6EE7B7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">حساب المكتب النشط</div>
           </div>
         </div>
         <button class="nav-item active" onclick="switchTab('dashboard', this)">📊 لوحة التحكم</button>
@@ -309,23 +300,24 @@
       <div style="display:flex;flex-direction:column;gap:8px">
         <div style="background:rgba(255,255,255,0.06);padding:12px;border-radius:12px;text-align:center;font-size:0.8rem;cursor:pointer" onclick="openOfficeSettingsModal()">
           <div id="sidebarFooterOffice" style="color:#6EE7B7;font-weight:700">مكتب المحاسبة والتجارة العامة</div>
-          <div id="cloudStatusBadge" style="color:#94A3B8;margin-top:4px">حفظ سحابي آمن ومزامنة تلقائية</div>
         </div>
-        <button class="btn btn-crimson" style="width:100%;justify-content:center" onclick="logoutCloudAccount()">🚪 تسجيل الخروج</button>
+        <button class="btn btn-crimson" style="width:100%" onclick="logoutCloudAccount()">🚪 تسجيل الخروج</button>
       </div>
     </aside>
 
     <div class="main-area">
+      <!-- Clean Top Header: Full Office Name on the right, essential tool icons on the left -->
       <header class="topbar">
-        <div>
-          <h2 id="headerOfficeTitle" style="font-size:1.18rem">مكتب المحاسبة والتجارة العامة</h2>
-          <p style="font-size:0.78rem;color:var(--text-muted)">حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت • سعر الصرف: <span id="headerExchangeRate">1,500</span> د.ع</p>
+        <div style="display:flex;align-items:center;gap:10px;cursor:pointer;min-width:0;flex:1" onclick="openOfficeSettingsModal()">
+          <div style="width:38px;height:38px;border-radius:10px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:700;flex-shrink:0">د/$</div>
+          <h2 id="headerOfficeTitle" style="font-size:1.12rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">مكتب المحاسبة والتجارة العامة</h2>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" class="no-print">
-          <button class="btn btn-outline" onclick="openOfficeSettingsModal()">🏢 اسم المكتب والصرف</button>
-          <button class="btn btn-outline" onclick="toggleTheme()">🌓 الوضع الليلي</button>
-          <button class="btn btn-outline" onclick="openDebtorModal()">+ مدين جديد</button>
-          <button class="btn btn-primary" onclick="openTxModal()">+ عملية مالية</button>
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0" class="no-print">
+          <button class="icon-tool-btn" onclick="forcePushAllToFirestore()" title="تحديث الحسابات">🔄</button>
+          <button class="icon-tool-btn" onclick="openOfficeSettingsModal()" title="إعدادات المكتب وسعر الصرف">💱</button>
+          <button class="icon-tool-btn" onclick="openPinModal()" title="رمز الحماية">🔒</button>
+          <button class="icon-tool-btn" onclick="toggleTheme()" title="الوضع الليلي/النهاري">🌓</button>
+          <button class="btn btn-primary btn-sm" onclick="openTxModal()">+ عملية جديدة</button>
         </div>
       </header>
 
@@ -336,8 +328,8 @@
           <div id="dashboardEmptyState"></div>
           <div class="card" id="dashboardRecentSection">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-              <h3>أحدث الحركات المالية المسجلة (الدينار العراقي والدولار الأمريكي)</h3>
-              <span class="badge badge-usd" id="syncPill">حفظ سحابي آمن ومزامنة تلقائية</span>
+              <h3>أحدث الحركات المالية المسجلة</h3>
+              <span class="badge badge-iqd">1$ = <span id="headerExchangeRate">1,500</span> د.ع</span>
             </div>
             <table>
               <thead>
@@ -354,8 +346,9 @@
             <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
               <input type="text" id="searchDebtor" placeholder="ابحث باسم المدين أو الهاتف أو العنوان..." oninput="renderAll()" style="max-width:380px;margin:0" />
               <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-outline" onclick="openDebtorModal()">+ مدين جديد</button>
                 <button class="btn btn-emerald" onclick="exportDebtorsCsv()">تصدير ملف إكسل (Excel)</button>
-                <button class="btn btn-primary" onclick="window.print()">طباعة / حفظ الكشف</button>
+                <button class="btn btn-primary" onclick="window.print()">طباعة الكشف</button>
               </div>
             </div>
           </div>
@@ -384,26 +377,25 @@
         <!-- SETTINGS & BACKUP -->
         <section id="tab-backup" style="display:none">
           <div class="card" style="margin-bottom:16px;border-color:var(--emerald)">
-            <h3>☁️ حساب المكتب والحفظ السحابي الآمن</h3>
-            <p style="color:var(--text-secondary);margin:6px 0">البريد المسجل: <strong id="settingsAccountEmail">-</strong></p>
-            <p style="color:var(--text-muted);font-size:0.84rem;margin-bottom:14px">حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت مع إمكانية فتح حسابك من أي هاتف آخر.</p>
+            <h3>حساب المكتب والحفظ التلقائي</h3>
+            <p style="color:var(--text-secondary);margin:6px 0 12px">البريد المسجل: <strong id="settingsAccountEmail">-</strong></p>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <button class="btn btn-emerald" onclick="forcePushAllToFirestore()">🔄 مزامنة وحفظ الحسابات الآن</button>
-              <button class="btn btn-crimson" onclick="logoutCloudAccount()">🚪 تسجيل الخروج من الحساب</button>
+              <button class="btn btn-emerald" onclick="forcePushAllToFirestore()">مزامنة وحفظ الآن</button>
+              <button class="btn btn-crimson" onclick="logoutCloudAccount()">تسجيل الخروج</button>
             </div>
           </div>
 
           <div class="card" style="margin-bottom:16px;border-color:var(--primary)">
-            <h3>🏢 إعدادات اسم المكتب وسعر الصرف والحماية</h3>
+            <h3>إعدادات اسم المكتب وسعر الصرف والحماية</h3>
             <p style="color:var(--text-secondary);margin:6px 0 14px">يظهر اسم المكتب في الترويسة العلوية، القائمة الجانبية، التقارير المطبوعة، ورسائل ومطالبات واتساب.</p>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <button class="btn btn-primary" onclick="openOfficeSettingsModal()">تعديل اسم المكتب أو سعر الصرف</button>
-              <button class="btn btn-outline" onclick="openPinModal()">🔒 إعداد رمز قفل الحماية (4 أرقام)</button>
+              <button class="btn btn-outline" onclick="openPinModal()">إعداد رمز قفل الحماية (4 أرقام)</button>
             </div>
           </div>
 
           <div class="card" style="margin-bottom:16px">
-            <h3>💾 النسخ الاحتياطي الشامل وتصدير الجداول</h3>
+            <h3>النسخ الاحتياطي الشامل وتصدير الجداول</h3>
             <p style="color:var(--text-secondary);margin:6px 0 14px">احتفظ بنسخة احتياطية شاملة لجميع السجلات والحسابات على هاتفك واستعدها في أي وقت بضغطة زر.</p>
             <div style="display:flex;gap:12px;flex-wrap:wrap">
               <button class="btn btn-emerald" onclick="downloadJsonBackup()">حفظ نسخة احتياطية شاملة على الهاتف</button>
@@ -415,21 +407,19 @@
             </div>
           </div>
 
-          <!-- Developer Credit Card in Settings -->
-          <div class="card" style="margin-bottom:16px;border-color:var(--emerald)">
-            <h3>👨‍💻 تصميم وتطوير التطبيق والدعم الفني</h3>
-            <p style="font-weight:700;font-size:1.02rem;margin:8px 0 4px">تم التصميم والتطوير بواسطة: أحمد أبو رسلان</p>
-            <p style="color:var(--emerald);font-weight:700;margin-bottom:12px">رقم الهاتف للتواصل والدعم الفني: 07512362567</p>
-            <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <a href="tel:07512362567" class="btn btn-primary">📞 اتصال هاتفي مباشر (07512362567)</a>
-              <a href="https://wa.me/9647512362567" target="_blank" rel="noopener" class="btn btn-emerald">💬 مراسلة واتساب مباشرة</a>
-            </div>
-          </div>
-
-          <div class="card" style="border-color:var(--crimson)">
-            <h3 style="color:var(--crimson)">⚠️ تصفير ومسح جميع بيانات التطبيق</h3>
+          <div class="card" style="margin-bottom:16px;border-color:var(--crimson)">
+            <h3 style="color:var(--crimson)">تصفير ومسح جميع بيانات التطبيق</h3>
             <p style="color:var(--text-secondary);margin:6px 0 14px">حذف جميع المدينين والعمليات المسجلة نهائياً والبدء بسجل محاسبي جديد وفارغ تماماً.</p>
             <button class="btn btn-crimson" onclick="openResetAllModal()">تصفير ومسح جميع بيانات التطبيق</button>
+          </div>
+
+          <!-- Compact Elegant Developer Footer in Settings -->
+          <div class="compact-dev-footer">
+            <span>تصميم وتطوير: أحمد أبو رسلان | 07512362567</span>
+            <span class="compact-dev-icons">
+              <a href="tel:07512362567" class="compact-dev-icon-link compact-dev-call" title="اتصال مباشر">📞</a>
+              <a href="https://wa.me/9647512362567" target="_blank" rel="noopener" class="compact-dev-icon-link compact-dev-wa" title="واتساب مباشر">💬</a>
+            </span>
           </div>
         </section>
       </main>
@@ -437,10 +427,10 @@
   </div>
 
   <nav class="mobile-nav no-print">
-    <button class="btn btn-outline" onclick="switchTab('dashboard', this)">الرئيسية</button>
-    <button class="btn btn-outline" onclick="switchTab('debtors', this)">المدينون</button>
-    <button class="btn btn-outline" onclick="switchTab('reports', this)">التقارير</button>
-    <button class="btn btn-outline" onclick="switchTab('backup', this)">الإعدادات</button>
+    <button class="btn btn-outline btn-sm" onclick="switchTab('dashboard', this)">الرئيسية</button>
+    <button class="btn btn-outline btn-sm" onclick="switchTab('debtors', this)">المدينون</button>
+    <button class="btn btn-outline btn-sm" onclick="switchTab('reports', this)">التقارير</button>
+    <button class="btn btn-outline btn-sm" onclick="switchTab('backup', this)">الإعدادات</button>
   </nav>
 
   <!-- Office & Exchange Rate Modal -->
@@ -461,7 +451,7 @@
   <!-- PIN Lock Setup Modal -->
   <div class="modal-backdrop" id="pinSetupModal">
     <div class="modal">
-      <h3 style="margin-bottom:10px">🔒 إعداد رمز قفل الحماية (4 أرقام)</h3>
+      <h3 style="margin-bottom:10px">إعداد رمز قفل الحماية (4 أرقام)</h3>
       <label>أدخل رمز الحماية من 4 أرقام (أو اتركه فارغاً لإلغاء القفل)</label>
       <input type="password" id="pinSetupInput" maxlength="4" placeholder="4 أرقام" />
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
@@ -478,7 +468,7 @@
       <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:14px">التطبيق محمي برمز مرور شخصي (4 أرقام)</p>
       <input type="password" id="unlockPinInput" maxlength="4" placeholder="••••" style="text-align:center;font-size:1.4rem;letter-spacing:8px" />
       <div id="pinErrorMsg" style="color:var(--crimson);font-size:0.82rem;margin-bottom:8px;display:none">رمز المرور غير صحيح!</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="verifyPinUnlock()">فتح القفل</button>
+      <button class="btn btn-primary" style="width:100%" onclick="verifyPinUnlock()">فتح القفل</button>
     </div>
   </div>
 
@@ -486,22 +476,28 @@
   <div class="modal-backdrop" id="debtorModal">
     <div class="modal">
       <h3 style="margin-bottom:12px">إضافة مدين / عميل جديد</h3>
-      <label>اسم العميل الكامل</label>
-      <input type="text" id="debtorName" placeholder="مثال: شركة الرافدين للتجارة" />
-      <label>رقم الهاتف (لواتساب والتواصل)</label>
-      <input type="text" id="debtorPhone" placeholder="0770xxxxxxx" />
-      <label>العنوان</label>
-      <input type="text" id="debtorAddress" placeholder="بغداد - الكرادة" />
+      <label>اسم العميل الكامل *</label>
+      <input type="text" id="debtorName" placeholder="مثال: شركة الفرات للتجارة العامة" />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label>رقم الهاتف (لواتساب)</label>
+          <input type="text" id="debtorPhone" placeholder="077XXXXXXXX" />
+        </div>
+        <div>
+          <label>العنوان / المحافظة</label>
+          <input type="text" id="debtorAddress" placeholder="الموصل - زمار" />
+        </div>
+      </div>
       <label>تاريخ استحقاق السداد (اختياري للتنبيه عند التأخر)</label>
       <input type="date" id="debtorDueDate" />
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
-          <label>سقف الائتمان (د.ع)</label>
-          <input type="number" id="debtorLimitIqd" value="0" />
+          <label>سقف الدين (د.ع IQD)</label>
+          <input type="number" id="debtorLimitIqd" value="5000000" />
         </div>
         <div>
-          <label>سقف الائتمان ($)</label>
-          <input type="number" id="debtorLimitUsd" value="0" />
+          <label>سقف الدين ($ USD)</label>
+          <input type="number" id="debtorLimitUsd" value="5000" />
         </div>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
@@ -511,7 +507,7 @@
     </div>
   </div>
 
-  <!-- New/Edit Transaction Modal (Supports Same or Cross-Currency Conversion) -->
+  <!-- New/Edit Transaction Modal -->
   <div class="modal-backdrop" id="txModal">
     <div class="modal">
       <h3 id="txModalTitle" style="margin-bottom:12px">تسجيل عملية مالية جديدة</h3>
@@ -557,7 +553,7 @@
   <!-- Delete Debtor Confirmation Modal -->
   <div class="modal-backdrop" id="deleteDebtorConfirmModal">
     <div class="modal">
-      <h3 style="color:var(--crimson);margin-bottom:10px">⚠️ تأكيد حذف المدين</h3>
+      <h3 style="color:var(--crimson);margin-bottom:10px">تأكيد حذف المدين</h3>
       <p id="deleteDebtorNamePrompt" style="margin-bottom:10px;font-weight:600"></p>
       <div id="deleteDebtorUnpaidWarning" style="background:var(--crimson-soft);color:var(--crimson);padding:12px;border-radius:12px;margin-bottom:12px;font-weight:700;display:none"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -570,29 +566,29 @@
   <!-- Payment Receipt WhatsApp Modal -->
   <div class="modal-backdrop" id="paymentReceiptModal">
     <div class="modal" style="text-align:center">
-      <h3 style="color:var(--emerald);margin-bottom:6px">✅ تم تسجيل الدفعة بنجاح</h3>
+      <h3 style="color:var(--emerald);margin-bottom:6px">تم تسجيل الدفعة بنجاح</h3>
       <p id="receiptSummaryText" style="color:var(--text-secondary);margin-bottom:14px;font-size:0.9rem"></p>
-      <button class="btn btn-emerald" style="width:100%;justify-content:center;margin-bottom:8px" id="receiptWhatsappBtn">📲 إرسال وصل القبض عبر واتساب</button>
-      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="closeModals()">إغلاق</button>
+      <button class="btn btn-emerald" style="width:100%;margin-bottom:8px" id="receiptWhatsappBtn">إرسال وصل القبض عبر واتساب</button>
+      <button class="btn btn-outline" style="width:100%" onclick="closeModals()">إغلاق</button>
     </div>
   </div>
 
   <!-- Celebratory Full Clearance Modal -->
   <div class="modal-backdrop" id="clearanceCelebrationModal">
     <div class="modal" style="text-align:center;border:2px solid var(--emerald)">
-      <div style="width:64px;height:64px;border-radius:50%;background:var(--emerald-soft);color:var(--emerald);display:grid;place-items:center;margin:0 auto 12px;font-size:1.8rem">🎉</div>
+      <div style="width:64px;height:64px;border-radius:50%;background:var(--emerald-soft);color:var(--emerald);display:grid;place-items:center;margin:0 auto 12px;font-size:1.8rem">✓</div>
       <h3 style="color:var(--emerald);margin-bottom:6px">إغلاق الذمة المالية وتصفير الحساب بالكامل!</h3>
       <p id="clearanceDebtorText" style="color:var(--text-primary);font-weight:700;margin-bottom:8px"></p>
       <p style="color:var(--text-secondary);font-size:0.86rem;margin-bottom:16px">تم سداد كامل الرصيد المستحق بالعملتين وأصبح الرصيد المتبقي (0 د.ع | 0 $).</p>
-      <button class="btn btn-emerald" style="width:100%;justify-content:center;margin-bottom:8px" id="clearanceWhatsappBtn">📲 إرسال سند براءة الذمة عبر واتساب</button>
-      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="closeModals()">إغلاق</button>
+      <button class="btn btn-emerald" style="width:100%;margin-bottom:8px" id="clearanceWhatsappBtn">إرسال سند براءة الذمة عبر واتساب</button>
+      <button class="btn btn-outline" style="width:100%" onclick="closeModals()">إغلاق</button>
     </div>
   </div>
 
   <!-- Factory Reset Confirmation Modal -->
   <div class="modal-backdrop" id="resetAllConfirmModal">
     <div class="modal">
-      <h3 style="color:var(--crimson);margin-bottom:10px">⚠️ تأكيد تصفير ومسح جميع البيانات</h3>
+      <h3 style="color:var(--crimson);margin-bottom:10px">تأكيد تصفير ومسح جميع البيانات</h3>
       <p style="color:var(--text-secondary);margin-bottom:14px">هل أنت متأكد من مسح جميع المدينين والعمليات المسجلة نهائياً والبدء بسجل جديد وفارغ تماماً؟ لا يمكن التراجع عن هذه الخطوة.</p>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button class="btn btn-outline" onclick="closeModals()">إلغاء</button>
@@ -614,53 +610,195 @@
       appId: "1:117431611267:web:1bdaa3d15290991462d0b6"
     };
 
-    // Interactive Welcome Slides Data
+    // ============================================================================
+    // REAL FULL-SCENE LOTTIE JSON OBJECTS (Bodymovin v5.7.4 Vector Animations)
+    // ============================================================================
+    function buildAccountingLottieJson() {
+      return {
+        v: "5.7.4", fr: 60, ip: 0, op: 180, w: 260, h: 260, nm: "SmartAccountingScene", ddd: 0, assets: [],
+        layers: [
+          {
+            ddd: 0, ind: 1, ty: 4, nm: "FloatingUsdCoin", sr: 1,
+            ks: {
+              o: { a: 0, k: 100 }, r: { a: 0, k: 0 },
+              p: { a: 1, k: [{ t: 0, s: [200, 68, 0] }, { t: 90, s: [200, 52, 0] }, { t: 180, s: [200, 68, 0] }] },
+              a: { a: 0, k: [0, 0, 0] }, s: { a: 0, k: [100, 100, 100] }
+            },
+            shapes: [
+              { ty: "el", d: 1, s: { a: 0, k: [52, 52] }, p: { a: 0, k: [0, 0] } },
+              { ty: "fl", c: { a: 0, k: [0.063, 0.725, 0.506, 1] }, o: { a: 0, k: 100 } }
+            ]
+          },
+          {
+            ddd: 0, ind: 2, ty: 4, nm: "FloatingIqdCoin", sr: 1,
+            ks: {
+              o: { a: 0, k: 100 }, r: { a: 0, k: 0 },
+              p: { a: 1, k: [{ t: 0, s: [60, 192, 0] }, { t: 90, s: [60, 206, 0] }, { t: 180, s: [60, 192, 0] }] },
+              a: { a: 0, k: [0, 0, 0] }, s: { a: 0, k: [100, 100, 100] }
+            },
+            shapes: [
+              { ty: "el", d: 1, s: { a: 0, k: [48, 48] }, p: { a: 0, k: [0, 0] } },
+              { ty: "fl", c: { a: 0, k: [0.145, 0.388, 0.922, 1] }, o: { a: 0, k: 100 } }
+            ]
+          },
+          {
+            ddd: 0, ind: 3, ty: 4, nm: "LedgerCard", sr: 1,
+            ks: {
+              o: { a: 0, k: 100 },
+              r: { a: 1, k: [{ t: 0, s: [-2] }, { t: 90, s: [2] }, { t: 180, s: [-2] }] },
+              p: { a: 1, k: [{ t: 0, s: [130, 134, 0] }, { t: 90, s: [130, 122, 0] }, { t: 180, s: [130, 134, 0] }] },
+              a: { a: 0, k: [0, 0, 0] }, s: { a: 0, k: [100, 100, 100] }
+            },
+            shapes: [
+              { ty: "rc", d: 1, s: { a: 0, k: [156, 108] }, p: { a: 0, k: [0, 0] }, r: { a: 0, k: 22 } },
+              { ty: "fl", c: { a: 0, k: [0.145, 0.388, 0.922, 1] }, o: { a: 0, k: 100 } }
+            ]
+          },
+          {
+            ddd: 0, ind: 4, ty: 4, nm: "AmbientCircle", sr: 1,
+            ks: {
+              o: { a: 0, k: 14 }, r: { a: 0, k: 0 }, p: { a: 0, k: [130, 130, 0] },
+              a: { a: 0, k: [0, 0, 0] },
+              s: { a: 1, k: [{ t: 0, s: [95, 95, 100] }, { t: 90, s: [108, 108, 100] }, { t: 180, s: [95, 95, 100] }] }
+            },
+            shapes: [
+              { ty: "el", d: 1, s: { a: 0, k: [220, 220] }, p: { a: 0, k: [0, 0] } },
+              { ty: "fl", c: { a: 0, k: [0.145, 0.388, 0.922, 1] }, o: { a: 0, k: 100 } }
+            ]
+          }
+        ]
+      };
+    }
+
+    function buildReportsLottieJson() {
+      return {
+        v: "5.7.4", fr: 60, ip: 0, op: 180, w: 260, h: 260, nm: "ReportsAndReceiptsScene", ddd: 0, assets: [],
+        layers: [
+          {
+            ddd: 0, ind: 1, ty: 4, nm: "Bar1", sr: 1,
+            ks: {
+              o: { a: 0, k: 100 }, r: { a: 0, k: 0 }, p: { a: 0, k: [86, 170, 0] },
+              a: { a: 0, k: [0, 35, 0] },
+              s: { a: 1, k: [{ t: 0, s: [100, 55, 100] }, { t: 90, s: [100, 105, 100] }, { t: 180, s: [100, 55, 100] }] }
+            },
+            shapes: [
+              { ty: "rc", d: 1, s: { a: 0, k: [22, 70] }, p: { a: 0, k: [0, 0] }, r: { a: 0, k: 8 } },
+              { ty: "fl", c: { a: 0, k: [0.145, 0.388, 0.922, 1] }, o: { a: 0, k: 100 } }
+            ]
+          },
+          {
+            ddd: 0, ind: 2, ty: 4, nm: "Bar2", sr: 1,
+            ks: {
+              o: { a: 0, k: 100 }, r: { a: 0, k: 0 }, p: { a: 0, k: [130, 170, 0] },
+              a: { a: 0, k: [0, 45, 0] },
+              s: { a: 1, k: [{ t: 0, s: [100, 100, 100] }, { t: 90, s: [100, 65, 100] }, { t: 180, s: [100, 100, 100] }] }
+            },
+            shapes: [
+              { ty: "rc", d: 1, s: { a: 0, k: [22, 90] }, p: { a: 0, k: [0, 0] }, r: { a: 0, k: 8 } },
+              { ty: "fl", c: { a: 0, k: [0.063, 0.725, 0.506, 1] }, o: { a: 0, k: 100 } }
+            ]
+          },
+          {
+            ddd: 0, ind: 3, ty: 4, nm: "Bar3", sr: 1,
+            ks: {
+              o: { a: 0, k: 100 }, r: { a: 0, k: 0 }, p: { a: 0, k: [174, 170, 0] },
+              a: { a: 0, k: [0, 50, 0] },
+              s: { a: 1, k: [{ t: 0, s: [100, 75, 100] }, { t: 90, s: [100, 115, 100] }, { t: 180, s: [100, 75, 100] }] }
+            },
+            shapes: [
+              { ty: "rc", d: 1, s: { a: 0, k: [22, 100] }, p: { a: 0, k: [0, 0] }, r: { a: 0, k: 8 } },
+              { ty: "fl", c: { a: 0, k: [0.063, 0.725, 0.506, 1] }, o: { a: 0, k: 100 } }
+            ]
+          },
+          {
+            ddd: 0, ind: 4, ty: 4, nm: "AmbientStage", sr: 1,
+            ks: {
+              o: { a: 0, k: 14 }, r: { a: 0, k: 0 }, p: { a: 0, k: [130, 130, 0] },
+              a: { a: 0, k: [0, 0, 0] }, s: { a: 0, k: [100, 100, 100] }
+            },
+            shapes: [
+              { ty: "el", d: 1, s: { a: 0, k: [220, 220] }, p: { a: 0, k: [0, 0] } },
+              { ty: "fl", c: { a: 0, k: [0.063, 0.725, 0.506, 1] }, o: { a: 0, k: 100 } }
+            ]
+          }
+        ]
+      };
+    }
+
+    function buildSecuritySyncLottieJson() {
+      return {
+        v: "5.7.4", fr: 60, ip: 0, op: 180, w: 260, h: 260, nm: "CloudSecuritySyncScene", ddd: 0, assets: [],
+        layers: [
+          {
+            ddd: 0, ind: 1, ty: 4, nm: "CoreShieldBadge", sr: 1,
+            ks: {
+              o: { a: 0, k: 100 }, r: { a: 0, k: 0 },
+              p: { a: 1, k: [{ t: 0, s: [130, 134, 0] }, { t: 90, s: [130, 122, 0] }, { t: 180, s: [130, 134, 0] }] },
+              a: { a: 0, k: [0, 0, 0] }, s: { a: 0, k: [100, 100, 100] }
+            },
+            shapes: [
+              { ty: "rc", d: 1, s: { a: 0, k: [116, 132] }, p: { a: 0, k: [0, 0] }, r: { a: 0, k: 36 } },
+              { ty: "fl", c: { a: 0, k: [0.051, 0.58, 0.533, 1] }, o: { a: 0, k: 100 } }
+            ]
+          },
+          {
+            ddd: 0, ind: 2, ty: 4, nm: "PulseRing", sr: 1,
+            ks: {
+              o: { a: 1, k: [{ t: 0, s: [35] }, { t: 90, s: [12] }, { t: 180, s: [35] }] },
+              r: { a: 0, k: 0 }, p: { a: 0, k: [130, 130, 0] }, a: { a: 0, k: [0, 0, 0] },
+              s: { a: 1, k: [{ t: 0, s: [88, 88, 100] }, { t: 90, s: [112, 112, 100] }, { t: 180, s: [88, 88, 100] }] }
+            },
+            shapes: [
+              { ty: "el", d: 1, s: { a: 0, k: [210, 210] }, p: { a: 0, k: [0, 0] } },
+              { ty: "fl", c: { a: 0, k: [0.051, 0.58, 0.533, 1] }, o: { a: 0, k: 100 } }
+            ]
+          }
+        ]
+      };
+    }
+
     const welcomeSlides = [
       {
-        icon: '💼',
-        badge: 'مرحباً بك في النظام المتكامل',
-        title: 'تطبيق سجل الديون والمحاسبة الاحترافي',
-        desc: 'نظام محاسبي متكامل مصمم خصيصاً لأصحاب المكاتب والشركات والتجار لإدارة الحسابات والذمم المالية بأعلى درجات الدقة والوضوح.',
-        points: [
-          '✓ حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت',
-          '✓ واجهة عربية أنيقة وسريعة تدعم الوضع الليلي والنهاري',
-          '✓ ترويسة رسمية باسم مكتبك أو شركتك في جميع التقارير والوصولات'
-        ]
+        title: 'إدارة ديونك وحساباتك بكل ذكاء',
+        desc: 'نظام محاسبي متكامل يدعم الدينار العراقي والدولار الأمريكي مع تصريف تلقائي دقيق.',
+        lottieData: buildAccountingLottieJson()
       },
       {
-        icon: '💱',
-        badge: 'إدارة مالية مزدوجة العملة',
-        title: 'إدارة الديون والتسديدات بالدينار العراقي والدولار الأمريكي',
-        desc: 'سجّل الديون والدفعات المستلمة بالدينار العراقي (د.ع) أو الدولار الأمريكي ($) بشكل مستقل أو مع تصريف تلقائي فوري حسب سعر الصرف.',
-        points: [
-          '✓ فصل تام ودقيق لأرصدة الدينار العراقي وأرصدة الدولار الأمريكي',
-          '✓ إمكانية استلام دفعة بعملة وتصريفها تلقائياً لتسديد العملة الأخرى',
-          '✓ إصدار وصولات قبض رسمية وسندات براءة ذمة ومشاركتها عبر واتساب'
-        ]
+        title: 'تقارير دقيقة ووصولات فورية',
+        desc: 'جرد يومي وشهري وسنوي مفصل مع إرسال كشوفات الحساب عبر واتساب بضغطة زر.',
+        lottieData: buildReportsLottieJson()
       },
       {
-        icon: '📊',
-        badge: 'جرد شامل وأمان تام للحسابات',
-        title: 'الجرد اليومي والشهري والسنوي وفتح حسابك من أي هاتف',
-        desc: 'تابع حركة مكتبك المالي بتقارير يومية وشهرية وسنوية مفصلة، مع حفظ آمن لحساباتك يتيح لك فتحها واسترجاعها من أي هاتف آخر في أي وقت.',
-        points: [
-          '✓ جرد يومي وشهري وسنوي دقيق مع تصدير ملف إكسل (Excel) وطباعة التقارير',
-          '✓ حفظ الحسابات بأمان تام مع إمكانية فتحها من أي هاتف آخر ببريدك وكلمة مرورك',
-          '✓ نسخ احتياطي شامل على الهاتف وحماية إضافية برمز قفل شخصي'
-        ]
+        title: 'بياناتك في أمان تام دائماً',
+        desc: 'عمل كامل بدون إنترنت مع حفظ تلقائي لحسابك لاسترجاع بياناتك من أي هاتف آخر.',
+        lottieData: buildSecuritySyncLottieJson()
       }
     ];
     let currentWelcomeSlide = 0;
+    let activeLottieInstance = null;
 
     function renderWelcomeSlide() {
       const s = welcomeSlides[currentWelcomeSlide];
-      document.getElementById('welcomeSlideIcon').textContent = s.icon;
-      document.getElementById('welcomeSlideBadge').textContent = s.badge;
       document.getElementById('welcomeSlideTitle').textContent = s.title;
       document.getElementById('welcomeSlideDesc').textContent = s.desc;
-      document.getElementById('welcomeSlidePoints').innerHTML = s.points.map(p => `<div>${p}</div>`).join('');
       const dots = document.querySelectorAll('#welcomeDotsContainer .slide-dot');
       dots.forEach((d, idx) => d.classList.toggle('active', idx === currentWelcomeSlide));
+
+      const container = document.getElementById('lottieSceneContainer');
+      if (activeLottieInstance) {
+        activeLottieInstance.destroy();
+        activeLottieInstance = null;
+      }
+      container.innerHTML = '';
+      if (typeof lottie !== 'undefined') {
+        activeLottieInstance = lottie.loadAnimation({
+          container: container,
+          renderer: 'svg',
+          loop: true,
+          autoplay: true,
+          animationData: JSON.parse(JSON.stringify(s.lottieData))
+        });
+      }
     }
 
     function setWelcomeSlide(idx) {
@@ -674,7 +812,7 @@
     }
 
     function startNowFromWelcome() {
-      localStorage.setItem('mizan_seen_welcome_v1', '1');
+      localStorage.setItem('mizan_seen_welcome_v2', '1');
       document.getElementById('welcomeOnboardingOverlay').classList.remove('open');
       document.getElementById('cloudAuthOverlay').classList.add('open');
     }
@@ -748,8 +886,8 @@
       document.getElementById('signUpExtraFields').style.display = (mode === 'SIGNUP') ? 'block' : 'none';
       document.getElementById('forgotPasswordRow').style.display = (mode === 'SIGNIN') ? 'block' : 'none';
       document.getElementById('authSubmitBtn').textContent = (mode === 'SIGNUP')
-        ? 'إنشاء حساب مكتب جديد والبدء بسجل نظيف'
-        : 'تسجيل الدخول واسترجاع بيانات المكتب';
+        ? 'إنشاء حساب مكتب جديد'
+        : 'تسجيل الدخول إلى حسابي';
       hideAuthAlerts();
     }
 
@@ -953,10 +1091,11 @@
     }
 
     function showInitialUnauthenticatedScreen() {
-      const seenWelcome = localStorage.getItem('mizan_seen_welcome_v1') === '1';
+      const seenWelcome = localStorage.getItem('mizan_seen_welcome_v2') === '1';
       if (!seenWelcome) {
         document.getElementById('welcomeOnboardingOverlay').classList.add('open');
         document.getElementById('cloudAuthOverlay').classList.remove('open');
+        renderWelcomeSlide();
       } else {
         document.getElementById('welcomeOnboardingOverlay').classList.remove('open');
         document.getElementById('cloudAuthOverlay').classList.add('open');
@@ -1036,7 +1175,7 @@
       if (!d) return;
       const s = calcDebtorSummary(d);
       const paidStr = currency === 'USD' ? fmtUsd(amount) : fmtIqd(amount);
-      const msg = `✅ وصل قبض رسمي صادر عن (${settings.officeName})\nالعميل المحترم: ${d.name}\nالمبلغ المستلم: ${paidStr}\nالبيان: ${note || 'تسديد دفعة حساب'}\n-------------------\nالرصيد المتبقي الحالي:\n• بالدينار العراقي: ${fmtIqd(s.balIqd)}\n• بالدولار الأمريكي: ${fmtUsd(s.balUsd)}\nالتاريخ: ${new Date().toLocaleString('ar-IQ')}\nشكراً لالتزامكم.`;
+      const msg = `وصل قبض رسمي صادر عن (${settings.officeName})\nالعميل المحترم: ${d.name}\nالمبلغ المستلم: ${paidStr}\nالبيان: ${note || 'تسديد دفعة حساب'}\n-------------------\nالرصيد المتبقي الحالي:\n• بالدينار العراقي: ${fmtIqd(s.balIqd)}\n• بالدولار الأمريكي: ${fmtUsd(s.balUsd)}\nالتاريخ: ${new Date().toLocaleString('ar-IQ')}\nشكراً لالتزامكم.`;
       const phone = normalizeWhatsAppPhone(d.phone);
       const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
       window.open(url, '_blank');
@@ -1045,14 +1184,13 @@
     function sendClearanceWhatsApp(debtorId) {
       const d = state.debtors.find(x => x.id === debtorId);
       if (!d) return;
-      const msg = `🎉 سند براءة ذمة وتصفير حساب صادر عن (${settings.officeName})\nنؤكد للأخ المحترم (${d.name}) سداد كامل الذمة المالية وأصبح الرصيد المتبقي (0 د.ع | 0 $).\nالتاريخ: ${new Date().toLocaleString('ar-IQ')}\nشاكرين حسن تعاملكم والتزامكم.`;
+      const msg = `سند براءة ذمة وتصفير حساب صادر عن (${settings.officeName})\nنؤكد للأخ المحترم (${d.name}) سداد كامل الذمة المالية وأصبح الرصيد المتبقي (0 د.ع | 0 $).\nالتاريخ: ${new Date().toLocaleString('ar-IQ')}\nشاكرين حسن تعاملكم والتزامكم.`;
       const phone = normalizeWhatsAppPhone(d.phone);
       const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
       window.open(url, '_blank');
     }
 
     function renderAll() {
-      document.getElementById('ribbonOfficeName').textContent = settings.officeName;
       document.getElementById('sidebarOfficeName').textContent = settings.officeName;
       document.getElementById('sidebarFooterOffice').textContent = settings.officeName;
       document.getElementById('headerOfficeTitle').textContent = settings.officeName;
@@ -1066,8 +1204,6 @@
       const totPayUsd = summaries.reduce((s, x) => s + x.payUsd, 0);
       const activeCount = summaries.filter(x => x.balIqd > 0 || x.balUsd > 0).length;
       const overdueCount = summaries.filter(x => x.isOverdue).length;
-
-      document.getElementById('topRibbonSummary').textContent = `المستحق: ${fmtIqd(totBalIqd)} | ${fmtUsd(totBalUsd)}`;
 
       document.getElementById('kpiContainer').innerHTML = `
         <div class="card">
@@ -1084,7 +1220,7 @@
           <div style="color:var(--text-secondary);font-size:0.85rem">المدينون النشطون والتنبيهات</div>
           <div style="font-size:1.45rem;font-weight:700;color:var(--primary);margin-top:6px">${activeCount} من ${summaries.length}</div>
           <div style="font-size:0.82rem;color:${overdueCount > 0 ? 'var(--crimson)' : 'var(--text-muted)'};font-weight:700">
-            ${overdueCount > 0 ? `⚠️ ${overdueCount} مدين متأخر عن تاريخ الاستحقاق` : 'لا توجد ديون متأخرة عن الاستحقاق'}
+            ${overdueCount > 0 ? `تنبيه: ${overdueCount} مدين متأخر عن تاريخ الاستحقاق` : 'لا توجد ديون متأخرة عن الاستحقاق'}
           </div>
         </div>
       `;
@@ -1163,12 +1299,12 @@
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
               <div>
                 <h3 style="font-size:1.05rem">${s.debtor.name}</h3>
-                <div style="font-size:0.8rem;color:var(--text-muted)">${s.debtor.phone || ''} • ${s.debtor.address || ''}</div>
+                <div style="font-size:0.8rem;color:var(--text-muted)">${s.debtor.phone || ''} ${s.debtor.address ? '• ' + s.debtor.address : ''}</div>
                 ${s.debtor.dueDate ? `<div style="font-size:0.76rem;color:${s.isOverdue ? 'var(--crimson)' : 'var(--text-secondary)'};margin-top:2px">تاريخ الاستحقاق: ${s.debtor.dueDate}</div>` : ''}
               </div>
               <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
                 <span class="badge ${s.isSettled ? 'badge-usd' : 'badge-iqd'}">${s.isSettled ? 'مسدد بالكامل ✓' : 'عميل نشط'}</span>
-                ${s.isOverdue ? `<span class="badge badge-crimson">⚠️ متأخر عن السداد</span>` : ''}
+                ${s.isOverdue ? `<span class="badge badge-crimson">متأخر عن السداد</span>` : ''}
               </div>
             </div>
             <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -1181,11 +1317,14 @@
                 <div style="font-weight:700;color:${s.balUsd > 0 ? 'var(--crimson)' : 'var(--emerald)'}">${fmtUsd(s.balUsd)}</div>
               </div>
             </div>
-            <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap" class="no-print">
-              <button class="btn btn-emerald btn-sm" onclick="openTxModalFor(${s.debtor.id}, 'PAYMENT')">تسديد دفعة</button>
+            <div class="debtor-actions-grid no-print">
+              <button class="btn btn-emerald btn-sm" onclick="openTxModalFor(${s.debtor.id}, 'PAYMENT')">تسديد</button>
               <button class="btn btn-outline btn-sm" onclick="openTxModalFor(${s.debtor.id}, 'DEBT')">إضافة دين</button>
-              ${(s.balIqd > 0 || s.balUsd > 0) ? `<button class="btn btn-outline btn-sm" onclick="sendDebtReminderWhatsApp(${s.debtor.id})">📲 مطالبة واتساب</button>` : ''}
-              <button class="btn btn-crimson btn-sm" onclick="promptDeleteDebtor(${s.debtor.id})">حذف المدين</button>
+              <button class="btn btn-outline btn-sm" onclick="sendDebtReminderWhatsApp(${s.debtor.id})">كشف حساب</button>
+            </div>
+            <div style="margin-top:8px;display:flex;justify-content:flex-end;gap:6px" class="no-print">
+              <button class="btn btn-outline btn-sm" onclick="sendDebtReminderWhatsApp(${s.debtor.id})" title="تذكير واتساب">📲</button>
+              <button class="btn btn-crimson btn-sm" onclick="promptDeleteDebtor(${s.debtor.id})" title="حذف المدين">🗑️</button>
             </div>
           </div>
         `).join('');

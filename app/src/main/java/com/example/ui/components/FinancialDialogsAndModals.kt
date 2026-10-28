@@ -1344,7 +1344,7 @@ fun DebtorFormDialog(
                         value = address,
                         onValueChange = { address = it },
                         label = { Text("العنوان / المحافظة") },
-                        placeholder = { Text("بغداد - الكرادة") },
+                        placeholder = { Text("الموصل - زمار") },
                         singleLine = true,
                         modifier = Modifier
                             .weight(1f)
@@ -1414,7 +1414,7 @@ fun DebtorFormDialog(
                                     Formatters.formatInputDate(System.currentTimeMillis() + (days * dayMs))
                                 }
                             },
-                            label = { Text(label) },
+                            label = { Text(label, maxLines = 1, softWrap = false) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = colors.primaryInteractiveSoft,
                                 selectedLabelColor = colors.primaryInteractive
@@ -1444,30 +1444,73 @@ fun DebtorFormDialog(
                         border = BorderStroke(1.dp, colors.subtleBorder)
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "رصيد دين افتتاحي (اختياري):",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = colors.textPrimary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Text(
-                                    text = "رصيد دين افتتاحي (اختياري):",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = colors.textPrimary
-                                )
-                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    FilterChip(
-                                        selected = initialDebtCurrency == CurrencyCode.IQD,
-                                        onClick = { initialDebtCurrency = CurrencyCode.IQD },
-                                        label = { Text("د.ع IQD") }
+                                val isIqdSelected = initialDebtCurrency == CurrencyCode.IQD
+                                Surface(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .clickable { initialDebtCurrency = CurrencyCode.IQD },
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = if (isIqdSelected) colors.primaryInteractive else colors.cardSurface,
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (isIqdSelected) colors.primaryInteractive else colors.subtleBorder
                                     )
-                                    FilterChip(
-                                        selected = initialDebtCurrency == CurrencyCode.USD,
-                                        onClick = { initialDebtCurrency = CurrencyCode.USD },
-                                        label = { Text("$ USD") }
+                                ) {
+                                    Box(
+                                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "دينار عراقي (د.ع IQD)",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = if (isIqdSelected) Color.White else colors.textPrimary,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    }
+                                }
+
+                                val isUsdSelected = initialDebtCurrency == CurrencyCode.USD
+                                Surface(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .clickable { initialDebtCurrency = CurrencyCode.USD },
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = if (isUsdSelected) colors.paymentEmerald else colors.cardSurface,
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (isUsdSelected) colors.paymentEmerald else colors.subtleBorder
                                     )
+                                ) {
+                                    Box(
+                                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "دولار أمريكي ($ USD)",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = if (isUsdSelected) Color.White else colors.textPrimary,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    }
                                 }
                             }
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1529,7 +1572,7 @@ fun DebtorFormDialog(
                             .height(48.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("إلغاء")
+                        Text("إلغاء", maxLines = 1, softWrap = false)
                     }
                     Button(
                         onClick = {
@@ -1565,9 +1608,11 @@ fun DebtorFormDialog(
                         colors = ButtonDefaults.buttonColors(containerColor = colors.primaryInteractive)
                     ) {
                         Text(
-                            text = if (isEditing) "حفظ التعديلات" else "إضافة المدين للسجل",
+                            text = if (isEditing) "حفظ التعديلات" else "حفظ المدين",
                             color = Color.White,
-                            style = MaterialTheme.typography.titleSmall
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
                 }

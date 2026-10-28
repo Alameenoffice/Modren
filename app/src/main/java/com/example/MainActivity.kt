@@ -739,169 +739,114 @@ private fun TopSaaSHeader(
         color = colors.cardSurface,
         border = BorderStroke(1.dp, colors.subtleBorder)
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            // Prominent Office / Company Header Bar
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF0F172A))
-                    .clickable { onOpenOfficeSettings() }
-                    .padding(vertical = 6.dp, horizontal = 14.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Business,
-                            contentDescription = null,
-                            tint = Color(0xFF10B981),
-                            modifier = Modifier.size(15.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = officeName,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = Color(0xFF6EE7B7),
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.testTag("top_office_name_banner")
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "تعديل اسم المكتب",
-                            tint = Color(0xFF94A3B8),
-                            modifier = Modifier.size(13.dp)
-                        )
-                    }
-                    Text(
-                        text = "${Formatters.formatIqd(uiState.totalOutstandingDebtIqd)} | ${Formatters.formatUsd(uiState.totalOutstandingDebtUsd)}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFFF8FAFC)
-                    )
-                }
-            }
-
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .weight(1f)
+                    .clickable { onOpenOfficeSettings() }
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    if (!isWideScreen) {
-                        IconButton(
-                            onClick = onOpenDrawer,
-                            modifier = Modifier.testTag("open_drawer_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "القائمة الجانبية",
-                                tint = colors.textPrimary
-                            )
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(colors.primaryInteractive),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AccountBalanceWallet,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column {
-                        Text(
-                            text = officeName,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = colors.textPrimary,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = "حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = colors.textMuted
-                        )
-                    }
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
+                if (!isWideScreen) {
                     IconButton(
-                        onClick = onSyncCloudNow,
-                        modifier = Modifier.testTag("header_cloud_sync_button")
+                        onClick = onOpenDrawer,
+                        modifier = Modifier.testTag("open_drawer_button")
                     ) {
                         Icon(
-                            imageVector = Icons.Default.CloudSync,
-                            contentDescription = "مزامنة سحابية فورية",
-                            tint = colors.paymentEmerald
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onOpenOfficeSettings,
-                        modifier = Modifier.testTag("open_office_exchange_settings_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CurrencyExchange,
-                            contentDescription = "إعدادات المكتب وسعر الصرف",
-                            tint = colors.primaryInteractive
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onLockOrPinSettings,
-                        modifier = Modifier.testTag("header_pin_lock_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = "الحماية وقفل التطبيق",
-                            tint = if (hasPinCode) colors.paymentEmerald else colors.textSecondary
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onToggleDarkMode,
-                        modifier = Modifier.testTag("toggle_dark_mode_button")
-                    ) {
-                        Icon(
-                            imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
-                            contentDescription = "تبديل الوضع الليلي والنهاري",
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "القائمة الجانبية",
                             tint = colors.textPrimary
                         )
                     }
+                }
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(colors.primaryInteractive),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AccountBalanceWallet,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = officeName,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.textPrimary,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.testTag("top_office_name_banner")
+                )
+            }
 
-                    if (isWideScreen) {
-                        Button(
-                            onClick = onNewTransaction,
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = colors.primaryInteractive)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("عملية جديدة", color = Color.White)
-                        }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                IconButton(
+                    onClick = onSyncCloudNow,
+                    modifier = Modifier.testTag("header_cloud_sync_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CloudSync,
+                        contentDescription = "تحديث الحسابات",
+                        tint = colors.primaryInteractive
+                    )
+                }
+
+                IconButton(
+                    onClick = onOpenOfficeSettings,
+                    modifier = Modifier.testTag("open_office_exchange_settings_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CurrencyExchange,
+                        contentDescription = "إعدادات المكتب وسعر الصرف",
+                        tint = colors.primaryInteractive
+                    )
+                }
+
+                IconButton(
+                    onClick = onLockOrPinSettings,
+                    modifier = Modifier.testTag("header_pin_lock_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "الحماية وقفل التطبيق",
+                        tint = if (hasPinCode) colors.paymentEmerald else colors.textSecondary
+                    )
+                }
+
+                IconButton(
+                    onClick = onToggleDarkMode,
+                    modifier = Modifier.testTag("toggle_dark_mode_button")
+                ) {
+                    Icon(
+                        imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                        contentDescription = "تبديل الوضع الليلي والنهاري",
+                        tint = colors.textPrimary
+                    )
+                }
+
+                if (isWideScreen) {
+                    Button(
+                        onClick = onNewTransaction,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.primaryInteractive)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("عملية جديدة", color = Color.White, maxLines = 1, softWrap = false)
                     }
                 }
             }

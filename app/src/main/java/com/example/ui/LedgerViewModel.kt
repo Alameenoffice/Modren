@@ -121,12 +121,12 @@ class LedgerViewModel(
     private val _authInfoMessage = MutableStateFlow<String?>(null)
     val authInfoMessage: StateFlow<String?> = _authInfoMessage.asStateFlow()
 
-    private val _cloudSyncStatus = MutableStateFlow("حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت")
+    private val _cloudSyncStatus = MutableStateFlow("الحساب نشط ومحفوظ تلقائياً")
     val cloudSyncStatus: StateFlow<String> = _cloudSyncStatus.asStateFlow()
 
     // Interactive Welcome Onboarding Intro State (shown before Sign-Up/Sign-In)
     private val _hasSeenWelcomeIntro = MutableStateFlow(
-        prefs.getBoolean("has_seen_welcome_intro_v1", false)
+        prefs.getBoolean("has_seen_welcome_intro_v2", false)
     )
     val hasSeenWelcomeIntro: StateFlow<Boolean> = _hasSeenWelcomeIntro.asStateFlow()
 
@@ -243,7 +243,7 @@ class LedgerViewModel(
 
     fun completeWelcomeIntro() {
         _hasSeenWelcomeIntro.value = true
-        prefs.edit().putBoolean("has_seen_welcome_intro_v1", true).apply()
+        prefs.edit().putBoolean("has_seen_welcome_intro_v2", true).apply()
     }
 
     fun reopenWelcomeIntro() {

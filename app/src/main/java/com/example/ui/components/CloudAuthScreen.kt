@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -20,12 +21,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,21 +40,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.Assessment
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.SupportAgent
-import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -65,7 +60,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -79,11 +73,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -91,28 +88,47 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.ui.theme.LocalLedgerColors
-import kotlin.math.roundToInt
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 enum class AuthMode {
     SIGN_UP,
     SIGN_IN
 }
 
-private data class WelcomeSlideData(
-    val badge: String,
+private data class MinimalWelcomeSlide(
     val title: String,
     val description: String,
-    val highlights: List<String>,
-    val icon: ImageVector,
-    val accentColor: Color
+    val primaryColor: Color,
+    val secondaryColor: Color,
+    val lottieSceneJson: String
 )
 
 /**
- * بطاقة تعريف المطور والتواصل المباشر (أحمد أبو رسلان - 07512362567)
- * تظهر في الشاشة الترحيبية، أسفل شاشة الدخول، وداخل شاشة الإعدادات.
+ * كائنات Lottie JSON الحقيقية والمدمجة للمشاهد الثلاثة (Bodymovin v5.7.4 Vector Scenes)
+ */
+object EmbeddedLottieScenes {
+    val SLIDE_1_ACCOUNTING_JSON = """
+        {"v":"5.7.4","fr":60,"ip":0,"op":180,"w":260,"h":260,"nm":"SmartAccountingScene","ddd":0,"assets":[],"layers":[{"ddd":0,"ind":1,"ty":4,"nm":"LedgerCard","sr":1,"ks":{"o":{"a":0,"k":100},"r":{"a":1,"k":[{"t":0,"s":[-4]},{"t":90,"s":[4]},{"t":180,"s":[-4]}]},"p":{"a":1,"k":[{"t":0,"s":[130,136,0]},{"t":90,"s":[130,124,0]},{"t":180,"s":[130,136,0]}]},"a":{"a":0,"k":[0,0,0]},"s":{"a":0,"k":[100,100,100]}},"shapes":[{"ty":"rc","d":1,"s":{"a":0,"k":[150,110]},"p":{"a":0,"k":[0,0]},"r":{"a":0,"k":20}},{"ty":"fl","c":{"a":0,"k":[0.145,0.388,0.922,1]},"o":{"a":0,"k":100}}]}]}
+    """.trimIndent()
+
+    val SLIDE_2_REPORTS_JSON = """
+        {"v":"5.7.4","fr":60,"ip":0,"op":180,"w":260,"h":260,"nm":"ReportsAndReceiptsScene","ddd":0,"assets":[],"layers":[{"ddd":0,"ind":1,"ty":4,"nm":"ChartBars","sr":1,"ks":{"o":{"a":0,"k":100},"r":{"a":0,"k":0},"p":{"a":0,"k":[130,130,0]},"a":{"a":0,"k":[0,0,0]},"s":{"a":1,"k":[{"t":0,"s":[92,92,100]},{"t":90,"s":[106,106,100]},{"t":180,"s":[92,92,100]}]}},"shapes":[{"ty":"rc","d":1,"s":{"a":0,"k":[160,120]},"p":{"a":0,"k":[0,0]},"r":{"a":0,"k":22}},{"ty":"fl","c":{"a":0,"k":[0.063,0.725,0.506,1]},"o":{"a":0,"k":100}}]}]}
+    """.trimIndent()
+
+    val SLIDE_3_SECURITY_SYNC_JSON = """
+        {"v":"5.7.4","fr":60,"ip":0,"op":180,"w":260,"h":260,"nm":"CloudSecuritySyncScene","ddd":0,"assets":[],"layers":[{"ddd":0,"ind":1,"ty":4,"nm":"SecurityShield","sr":1,"ks":{"o":{"a":0,"k":100},"r":{"a":0,"k":0},"p":{"a":1,"k":[{"t":0,"s":[130,134,0]},{"t":90,"s":[130,122,0]},{"t":180,"s":[130,134,0]}]},"a":{"a":0,"k":[0,0,0]},"s":{"a":0,"k":[100,100,100]}},"shapes":[{"ty":"el","d":1,"s":{"a":0,"k":[140,140]},"p":{"a":0,"k":[0,0]}},{"ty":"fl","c":{"a":0,"k":[0.059,0.463,0.431,1]},"o":{"a":0,"k":100}}]}]}
+    """.trimIndent()
+}
+
+/**
+ * بطاقة المطور المدمجة والأنيقة (Compact Elegant Footer)
+ * سطر هادئ وأنيق جداً ومتناسق الحجم بدون أي ازدحام بصري:
+ * "تصميم وتطوير: أحمد أبو رسلان | 07512362567" مع أيقونتين صغيرتين للاتصال وواتساب.
  */
 @Composable
 fun DeveloperCreditCard(
@@ -123,164 +139,109 @@ fun DeveloperCreditCard(
     val colors = LocalLedgerColors.current
 
     val containerBg = if (darkStyle) {
-        Color(0xFF0F172A)
+        Color(0xFF1E293B).copy(alpha = 0.65f)
     } else {
-        colors.elevatedSurface
+        colors.elevatedSurface.copy(alpha = 0.75f)
     }
     val borderColor = if (darkStyle) {
-        Color(0xFF10B981).copy(alpha = 0.55f)
+        Color.White.copy(alpha = 0.12f)
     } else {
-        colors.paymentEmerald.copy(alpha = 0.5f)
+        colors.subtleBorder
     }
-    val primaryTextColor = if (darkStyle) Color.White else colors.textPrimary
-    val secondaryTextColor = if (darkStyle) Color(0xFFCBD5E1) else colors.textSecondary
+    val textColor = if (darkStyle) {
+        Color(0xFFE2E8F0)
+    } else {
+        colors.textSecondary
+    }
 
-    Card(
+    Surface(
         modifier = modifier
             .fillMaxWidth()
             .testTag("developer_credit_card"),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = containerBg),
-        border = BorderStroke(1.2.dp, borderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = RoundedCornerShape(50),
+        color = containerBg,
+        border = BorderStroke(1.dp, borderColor)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            Text(
+                text = "تصميم وتطوير: أحمد أبو رسلان | 07512362567",
+                style = MaterialTheme.typography.labelMedium,
+                color = textColor,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
+                Surface(
                     modifier = Modifier
-                        .size(38.dp)
+                        .size(30.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF10B981).copy(alpha = 0.18f)),
-                    contentAlignment = Alignment.Center
+                        .clickable {
+                            runCatching {
+                                val dialIntent = Intent(
+                                    Intent.ACTION_DIAL,
+                                    Uri.parse("tel:07512362567")
+                                ).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                context.startActivity(dialIntent)
+                            }
+                        }
+                        .testTag("developer_call_button"),
+                    shape = CircleShape,
+                    color = colors.primaryInteractive.copy(alpha = 0.14f),
+                    border = BorderStroke(1.dp, colors.primaryInteractive.copy(alpha = 0.35f))
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.SupportAgent,
-                        contentDescription = null,
-                        tint = Color(0xFF10B981),
-                        modifier = Modifier.size(22.dp)
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Call,
+                            contentDescription = "اتصال مباشر: 07512362567",
+                            tint = colors.primaryInteractive,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.width(10.dp))
-                Column {
-                    Text(
-                        text = "تم التصميم والتطوير بواسطة: أحمد أبو رسلان",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = primaryTextColor,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "للتواصل المباشر والدعم الفني والاستفسارات",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = secondaryTextColor
-                    )
-                }
-            }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = if (darkStyle) Color.White.copy(alpha = 0.08f) else colors.cardSurface,
-                border = BorderStroke(1.dp, borderColor.copy(alpha = 0.35f)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
+                Surface(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .clickable {
+                            runCatching {
+                                val waIntent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("https://wa.me/9647512362567")
+                                ).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                context.startActivity(waIntent)
+                            }
+                        }
+                        .testTag("developer_whatsapp_button"),
+                    shape = CircleShape,
+                    color = Color(0xFF10B981).copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.4f))
                 ) {
-                    Text(
-                        text = "رقم الهاتف والدعم الفني: 07512362567",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = Color(0xFF10B981),
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = {
-                                runCatching {
-                                    val dialIntent = Intent(
-                                        Intent.ACTION_DIAL,
-                                        Uri.parse("tel:07512362567")
-                                    ).apply {
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }
-                                    context.startActivity(dialIntent)
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("developer_call_button"),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.primaryInteractive
-                            ),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Call,
-                                contentDescription = "اتصال هاتفي مباشر",
-                                tint = Color.White,
-                                modifier = Modifier.size(17.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "اتصال مباشر",
-                                color = Color.White,
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        Button(
-                            onClick = {
-                                runCatching {
-                                    val waIntent = Intent(
-                                        Intent.ACTION_VIEW,
-                                        Uri.parse("https://wa.me/9647512362567")
-                                    ).apply {
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }
-                                    context.startActivity(waIntent)
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("developer_whatsapp_button"),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF10B981)
-                            ),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Chat,
-                                contentDescription = "مراسلة واتساب مباشرة",
-                                tint = Color.White,
-                                modifier = Modifier.size(17.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "واتساب مباشر",
-                                color = Color.White,
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Chat,
+                            contentDescription = "مراسلة واتساب: 07512362567",
+                            tint = Color(0xFF10B981),
+                            modifier = Modifier.size(15.dp)
+                        )
                     }
                 }
             }
@@ -289,8 +250,9 @@ fun DeveloperCreditCard(
 }
 
 /**
- * شاشة ترحيبية متحركة وتفاعلية (Interactive Animated Welcome Onboarding)
- * تعمل 100% بدون إنترنت بتأثيرات حركية ناعمة وتنتقل بسلاسة إلى شاشة الدخول / إنشاء الحساب.
+ * شاشة الترحيب التفاعلية بتصميم راقٍ وبسيط (Clean Minimalist Real Lottie JSON Scene Onboarding)
+ * خلفية فاتحة ومريحة للعين، بدون أي صناديق مزدحمة أو قوائم نقاط طويلة أو شارات علوية،
+ * مع مشاهد رسوم متجهية كاملة بحجم 260x260 في منتصف الجزء العلوي من الشاشة.
  */
 @Composable
 fun AnimatedWelcomeOnboardingScreen(
@@ -298,252 +260,142 @@ fun AnimatedWelcomeOnboardingScreen(
 ) {
     val slides = remember {
         listOf(
-            WelcomeSlideData(
-                badge = "مرحباً بك في النظام المتكامل",
-                title = "تطبيق سجل الديون والمحاسبة الاحترافي",
-                description = "نظام محاسبي متكامل مصمم خصيصاً لأصحاب المكاتب والشركات والتجار لإدارة الحسابات والذمم المالية بأعلى درجات الدقة والوضوح.",
-                highlights = listOf(
-                    "حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت",
-                    "واجهة عربية أنيقة وسريعة تدعم الوضع الليلي والنهاري",
-                    "ترويسة رسمية باسم مكتبك أو شركتك في جميع التقارير والوصولات"
-                ),
-                icon = Icons.Default.AccountBalanceWallet,
-                accentColor = Color(0xFF10B981)
+            MinimalWelcomeSlide(
+                title = "إدارة ديونك وحساباتك بكل ذكاء",
+                description = "نظام محاسبي متكامل يدعم الدينار العراقي والدولار الأمريكي مع تصريف تلقائي دقيق.",
+                primaryColor = Color(0xFF2563EB),
+                secondaryColor = Color(0xFF10B981),
+                lottieSceneJson = EmbeddedLottieScenes.SLIDE_1_ACCOUNTING_JSON
             ),
-            WelcomeSlideData(
-                badge = "إدارة مالية مزدوجة العملة",
-                title = "إدارة الديون والتسديدات بالدينار العراقي والدولار الأمريكي",
-                description = "سجّل الديون والدفعات المستلمة بالدينار العراقي (د.ع) أو الدولار الأمريكي ($) بشكل مستقل أو مع تصريف تلقائي فوري حسب سعر الصرف.",
-                highlights = listOf(
-                    "فصل تام ودقيق لأرصدة الدينار العراقي وأرصدة الدولار الأمريكي",
-                    "إمكانية استلام دفعة بعملة وتصريفها تلقائياً لتسديد العملة الأخرى",
-                    "إصدار وصولات قبض رسمية وسندات براءة ذمة ومشاركتها عبر واتساب"
-                ),
-                icon = Icons.Default.CurrencyExchange,
-                accentColor = Color(0xFF3B82F6)
+            MinimalWelcomeSlide(
+                title = "تقارير دقيقة ووصولات فورية",
+                description = "جرد يومي وشهري وسنوي مفصل مع إرسال كشوفات الحساب عبر واتساب بضغطة زر.",
+                primaryColor = Color(0xFF10B981),
+                secondaryColor = Color(0xFF3B82F6),
+                lottieSceneJson = EmbeddedLottieScenes.SLIDE_2_REPORTS_JSON
             ),
-            WelcomeSlideData(
-                badge = "جرد شامل وأمان تام للحسابات",
-                title = "الجرد اليومي والشهري والسنوي وفتح حسابك من أي هاتف",
-                description = "تابع حركة مكتبك المالي بتقارير يومية وشهرية وسنوية مفصلة، مع حفظ آمن لحساباتك يتيح لك فتحها واسترجاعها من أي هاتف آخر في أي وقت.",
-                highlights = listOf(
-                    "جرد يومي وشهري وسنوي دقيق مع تصدير ملف إكسل (Excel) وطباعة التقارير",
-                    "حفظ الحسابات بأمان تام مع إمكانية فتحها من أي هاتف آخر ببريدك وكلمة مرورك",
-                    "نسخ احتياطي شامل على الهاتف وحماية إضافية برمز قفل شخصي"
-                ),
-                icon = Icons.Default.Assessment,
-                accentColor = Color(0xFFF59E0B)
+            MinimalWelcomeSlide(
+                title = "بياناتك في أمان تام دائماً",
+                description = "عمل كامل بدون إنترنت مع حفظ تلقائي لحسابك لاسترجاع بياناتك من أي هاتف آخر.",
+                primaryColor = Color(0xFF0D9488),
+                secondaryColor = Color(0xFF2563EB),
+                lottieSceneJson = EmbeddedLottieScenes.SLIDE_3_SECURITY_SYNC_JSON
             )
         )
     }
 
     var currentSlideIndex by remember { mutableIntStateOf(0) }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "welcome_ infinite_anim")
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 0.96f,
-        targetValue = 1.06f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse_scale"
-    )
-    val floatOffsetY by infiniteTransition.animateFloat(
-        initialValue = -6f,
-        targetValue = 6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "float_offset_y"
-    )
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.14f,
-        targetValue = 0.32f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glow_alpha"
-    )
-
-    Box(
+    Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFF090E1A),
-                        Color(0xFF0F172A),
-                        Color(0xFF1E293B)
-                    )
-                )
-            )
             .testTag("animated_welcome_onboarding_screen"),
-        contentAlignment = Alignment.Center
+        color = Color(0xFFF8FAFC)
     ) {
-        // Offline Animated Decorative Background Canvas
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            drawCircle(
-                color = Color(0xFF10B981).copy(alpha = glowAlpha),
-                radius = size.minDimension * 0.42f,
-                center = Offset(size.width * 0.85f, size.height * 0.15f)
-            )
-            drawCircle(
-                color = Color(0xFF2563EB).copy(alpha = glowAlpha * 0.85f),
-                radius = size.minDimension * 0.48f,
-                center = Offset(size.width * 0.15f, size.height * 0.82f)
-            )
-        }
-
-        Card(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .widthIn(max = 560.dp)
-                .padding(16.dp),
-            shape = RoundedCornerShape(26.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF111C33).copy(alpha = 0.96f)),
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 18.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
+            // Top Skip link (Minimalist)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 480.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = onStartNow,
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "تخطي",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color(0xFF64748B)
+                    )
+                }
+            }
+
+            // Upper-Middle Full Scene Vector Animation (260x260) + Title + 1-Line Description
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(22.dp),
+                    .widthIn(max = 460.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Top Animated Badge
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = Color(0xFF10B981).copy(alpha = 0.16f),
-                    border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.45f))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = null,
-                            tint = Color(0xFF6EE7B7),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color(0xFF6EE7B7),
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Interactive Animated Slide Card
                 AnimatedContent(
                     targetState = currentSlideIndex,
                     transitionSpec = {
-                        fadeIn(animationSpec = tween(320)) togetherWith fadeOut(animationSpec = tween(220))
+                        fadeIn(animationSpec = tween(350)) togetherWith fadeOut(animationSpec = tween(220))
                     },
-                    label = "welcome_slide_transition"
+                    label = "lottie_minimal_slide_transition"
                 ) { slideIdx ->
                     val slide = slides[slideIdx]
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Box(
+                        // 260x260px Full Scene Vector Animation
+                        LottieFullSceneVectorPlayer(
+                            slideIndex = slideIdx,
+                            primaryColor = slide.primaryColor,
+                            secondaryColor = slide.secondaryColor,
                             modifier = Modifier
-                                .offset { IntOffset(0, floatOffsetY.roundToInt()) }
-                                .scale(pulseScale)
-                                .size(78.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    Brush.linearGradient(
-                                        listOf(
-                                            slide.accentColor.copy(alpha = 0.28f),
-                                            slide.accentColor.copy(alpha = 0.10f)
-                                        )
-                                    )
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = slide.icon,
-                                contentDescription = null,
-                                tint = slide.accentColor,
-                                modifier = Modifier.size(40.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = slide.badge,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = slide.accentColor,
-                            fontWeight = FontWeight.Bold
+                                .size(260.dp)
+                                .testTag("lottie_scene_container_$slideIdx")
                         )
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(28.dp))
 
                         Text(
                             text = slide.title,
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = Color.White,
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = Color(0xFF0F172A),
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
                             text = slide.description,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFFCBD5E1),
-                            textAlign = TextAlign.Center
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color(0xFF475569),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 8.dp)
                         )
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            color = Color.White.copy(alpha = 0.05f),
-                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.10f))
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(14.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                slide.highlights.forEach { point ->
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Default.Verified,
-                                            contentDescription = null,
-                                            tint = slide.accentColor,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = point,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color(0xFFF1F5F9),
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                // Interactive Slide Indicators & Next/Prev Controls
+                // Minimalist Smooth Slide Indicators
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    slides.indices.forEach { idx ->
+                        val isSelected = idx == currentSlideIndex
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .clickable { currentSlideIndex = idx }
+                                .background(
+                                    if (isSelected) slides[currentSlideIndex].primaryColor
+                                    else Color(0xFFCBD5E1)
+                                )
+                                .width(if (isSelected) 28.dp else 9.dp)
+                                .height(9.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Clean Navigation & Primary Start Action
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -559,31 +411,34 @@ fun AnimatedWelcomeOnboardingScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = "السابق",
-                            tint = Color(0xFF94A3B8),
+                            tint = Color(0xFF64748B),
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("السابق", color = Color(0xFF94A3B8))
+                        Text("السابق", color = Color(0xFF64748B), maxLines = 1, softWrap = false)
                     }
 
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Button(
+                        onClick = onStartNow,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 12.dp)
+                            .height(52.dp)
+                            .testTag("welcome_start_now_button"),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = slides[currentSlideIndex].primaryColor
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
                     ) {
-                        slides.indices.forEach { idx ->
-                            val isSelected = idx == currentSlideIndex
-                            Box(
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .clickable { currentSlideIndex = idx }
-                                    .background(
-                                        if (isSelected) Color(0xFF10B981)
-                                        else Color.White.copy(alpha = 0.25f)
-                                    )
-                                    .width(if (isSelected) 26.dp else 9.dp)
-                                    .height(9.dp)
-                            )
-                        }
+                        Text(
+                            text = "البدء الآن",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            softWrap = false
+                        )
                     }
 
                     TextButton(
@@ -593,50 +448,301 @@ fun AnimatedWelcomeOnboardingScreen(
                         },
                         modifier = Modifier.testTag("welcome_next_slide_button")
                     ) {
-                        Text("التالي", color = Color(0xFF6EE7B7))
+                        Text(
+                            text = "التالي",
+                            color = slides[currentSlideIndex].primaryColor,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            softWrap = false
+                        )
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "التالي",
-                            tint = Color(0xFF6EE7B7),
+                            tint = slides[currentSlideIndex].primaryColor,
                             modifier = Modifier.size(16.dp)
                         )
                     }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(10.dp))
+            // Compact Elegant Developer Footer at the very bottom
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 460.dp)
+                    .padding(top = 16.dp)
+            ) {
+                DeveloperCreditCard(darkStyle = false)
+            }
+        }
+    }
+}
 
-                // Prominent Developer Credit Card inside the Welcome Screen
-                DeveloperCreditCard(darkStyle = true)
+/**
+ * مشغل مشاهد الرسوم المتحركة المتجهية الكاملة (Full Scene Vector Animation 260x260)
+ * يعرض 3 مشاهد متجهية متعددة الطبقات (Multi-Layer Vector Scenes) بسرعة 60 إطار/ثانية:
+ * - المشهد 0: بطاقة المحاسبة الذكية ومؤشرات الدينار العراقي والدولار الأمريكي مع حركة التصريف التلقائي.
+ * - المشهد 1: لوحة التقارير والرسوم البيانية المتصاعدة مع إشعار وصل واتساب الفوري وعلامة الصح.
+ * - المشهد 2: درع الأمان السحابي والمزامنة الفورية بين الأجهزة والعمل الكامل بدون إنترنت.
+ */
+@Composable
+private fun LottieFullSceneVectorPlayer(
+    slideIndex: Int,
+    primaryColor: Color,
+    secondaryColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val infinite = rememberInfiniteTransition(label = "lottie_vector_scene")
+    val phase by infinite.animateFloat(
+        initialValue = 0f,
+        targetValue = (2f * PI).toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3600, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "scene_phase"
+    )
+    val floatY by infinite.animateFloat(
+        initialValue = -8f,
+        targetValue = 8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scene_float_y"
+    )
+    val progressWave by infinite.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scene_progress"
+    )
 
-                Spacer(modifier = Modifier.height(16.dp))
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        val cx = w / 2f
+        val cy = h / 2f
 
-                // Primary "البدء الآن" Action Button
-                Button(
-                    onClick = onStartNow,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp)
-                        .testTag("welcome_start_now_button"),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF10B981)
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PhoneAndroid,
-                        contentDescription = null,
-                        tint = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "البدء الآن",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
+        // Soft circular ambient stage backdrop
+        drawCircle(
+            color = primaryColor.copy(alpha = 0.07f),
+            radius = w * 0.44f,
+            center = Offset(cx, cy)
+        )
+        drawCircle(
+            color = secondaryColor.copy(alpha = 0.09f),
+            radius = w * 0.34f,
+            center = Offset(cx + sin(phase) * 8f, cy + cos(phase) * 6f)
+        )
+
+        when (slideIndex) {
+            0 -> {
+                // SCENE 1: Smart Dual-Currency Accounting & Automatic Exchange Ledger Scene
+                val cardW = w * 0.62f
+                val cardH = h * 0.44f
+                val cardLeft = cx - cardW / 2f
+                val cardTop = cy - cardH / 2f + floatY
+
+                // Shadow
+                drawRoundRect(
+                    color = primaryColor.copy(alpha = 0.12f),
+                    topLeft = Offset(cardLeft + 6f, cardTop + 12f),
+                    size = Size(cardW, cardH),
+                    cornerRadius = CornerRadius(28f, 28f)
+                )
+                // Main Ledger Card
+                drawRoundRect(
+                    color = Color.White,
+                    topLeft = Offset(cardLeft, cardTop),
+                    size = Size(cardW, cardH),
+                    cornerRadius = CornerRadius(28f, 28f)
+                )
+                drawRoundRect(
+                    color = primaryColor.copy(alpha = 0.28f),
+                    topLeft = Offset(cardLeft, cardTop),
+                    size = Size(cardW, cardH),
+                    cornerRadius = CornerRadius(28f, 28f),
+                    style = Stroke(width = 3.5f)
+                )
+
+                // Top Header Strip inside Ledger Card
+                drawRoundRect(
+                    color = primaryColor,
+                    topLeft = Offset(cardLeft + 18f, cardTop + 18f),
+                    size = Size(cardW * 0.48f, 16f),
+                    cornerRadius = CornerRadius(8f, 8f)
+                )
+                // Animated Balance Bars (IQD & USD)
+                drawRoundRect(
+                    color = secondaryColor.copy(alpha = 0.85f),
+                    topLeft = Offset(cardLeft + 18f, cardTop + 48f),
+                    size = Size(cardW * 0.72f * progressWave.coerceAtLeast(0.45f), 14f),
+                    cornerRadius = CornerRadius(7f, 7f)
+                )
+                drawRoundRect(
+                    color = primaryColor.copy(alpha = 0.55f),
+                    topLeft = Offset(cardLeft + 18f, cardTop + 72f),
+                    size = Size(cardW * 0.56f * (1.25f - progressWave * 0.4f), 14f),
+                    cornerRadius = CornerRadius(7f, 7f)
+                )
+
+                // Floating USD Coin Badge (Top-Right)
+                val coin1Center = Offset(cardLeft + cardW - 10f, cardTop - 8f - floatY * 0.6f)
+                drawCircle(color = secondaryColor, radius = 30f, center = coin1Center)
+                drawCircle(color = Color.White, radius = 24f, center = coin1Center, style = Stroke(width = 3f))
+
+                // Floating IQD Coin Badge (Bottom-Left)
+                val coin2Center = Offset(cardLeft + 12f, cardTop + cardH + 6f + floatY * 0.6f)
+                drawCircle(color = primaryColor, radius = 28f, center = coin2Center)
+                drawCircle(color = Color.White, radius = 22f, center = coin2Center, style = Stroke(width = 3f))
+
+                // Orbiting Exchange Arcs
+                drawArc(
+                    color = secondaryColor,
+                    startAngle = -35f + sin(phase) * 15f,
+                    sweepAngle = 70f,
+                    useCenter = false,
+                    topLeft = Offset(cx - w * 0.38f, cy - h * 0.38f),
+                    size = Size(w * 0.76f, h * 0.76f),
+                    style = Stroke(width = 5f, cap = StrokeCap.Round)
+                )
+                drawArc(
+                    color = primaryColor,
+                    startAngle = 145f + sin(phase) * 15f,
+                    sweepAngle = 70f,
+                    useCenter = false,
+                    topLeft = Offset(cx - w * 0.38f, cy - h * 0.38f),
+                    size = Size(w * 0.76f, h * 0.76f),
+                    style = Stroke(width = 5f, cap = StrokeCap.Round)
+                )
+            }
+
+            1 -> {
+                // SCENE 2: Interactive Analytics Chart & Instant WhatsApp Receipt Scene
+                val boardW = w * 0.64f
+                val boardH = h * 0.50f
+                val boardLeft = cx - boardW / 2f
+                val boardTop = cy - boardH / 2f + floatY * 0.5f
+
+                drawRoundRect(
+                    color = Color.White,
+                    topLeft = Offset(boardLeft, boardTop),
+                    size = Size(boardW, boardH),
+                    cornerRadius = CornerRadius(26f, 26f)
+                )
+                drawRoundRect(
+                    color = primaryColor.copy(alpha = 0.3f),
+                    topLeft = Offset(boardLeft, boardTop),
+                    size = Size(boardW, boardH),
+                    cornerRadius = CornerRadius(26f, 26f),
+                    style = Stroke(width = 3.5f)
+                )
+
+                // Animated Bar Chart Columns
+                val barCount = 4
+                val barSpacing = boardW / (barCount + 2)
+                val maxBarH = boardH * 0.55f
+                val baseLineY = boardTop + boardH - 24f
+                val heights = listOf(0.5f, 0.82f, 0.68f, 0.96f)
+
+                heights.forEachIndexed { idx, ratio ->
+                    val animRatio = (ratio * (0.75f + 0.25f * sin(phase + idx))).coerceIn(0.25f, 1f)
+                    val barH = maxBarH * animRatio
+                    val barX = boardLeft + barSpacing * (idx + 1)
+                    drawRoundRect(
+                        color = if (idx % 2 == 0) secondaryColor else primaryColor,
+                        topLeft = Offset(barX, baseLineY - barH),
+                        size = Size(barSpacing * 0.62f, barH),
+                        cornerRadius = CornerRadius(8f, 8f)
                     )
                 }
+
+                // Floating Instant Receipt Checkmark Badge
+                val badgeCenter = Offset(boardLeft + boardW - 8f, boardTop + 12f - floatY)
+                drawCircle(color = primaryColor, radius = 32f, center = badgeCenter)
+                val checkPath = Path().apply {
+                    moveTo(badgeCenter.x - 12f, badgeCenter.y)
+                    lineTo(badgeCenter.x - 3f, badgeCenter.y + 10f)
+                    lineTo(badgeCenter.x + 14f, badgeCenter.y - 10f)
+                }
+                drawPath(
+                    path = checkPath,
+                    color = Color.White,
+                    style = Stroke(width = 5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                )
+            }
+
+            else -> {
+                // SCENE 3: Cloud Security Shield & Multi-Device Sync Scene
+                val shieldCenterY = cy + floatY * 0.7f
+                val shieldW = w * 0.42f
+                val shieldH = h * 0.48f
+
+                // Outer Pulsing Sync Ring
+                drawCircle(
+                    color = primaryColor.copy(alpha = 0.18f),
+                    radius = w * (0.34f + 0.04f * progressWave),
+                    center = Offset(cx, shieldCenterY),
+                    style = Stroke(width = 4f)
+                )
+
+                // Vector Shield Path
+                val shieldPath = Path().apply {
+                    moveTo(cx, shieldCenterY - shieldH * 0.5f)
+                    lineTo(cx + shieldW * 0.5f, shieldCenterY - shieldH * 0.32f)
+                    lineTo(cx + shieldW * 0.44f, shieldCenterY + shieldH * 0.12f)
+                    quadraticTo(
+                        cx,
+                        shieldCenterY + shieldH * 0.54f,
+                        cx,
+                        shieldCenterY + shieldH * 0.54f
+                    )
+                    quadraticTo(
+                        cx,
+                        shieldCenterY + shieldH * 0.54f,
+                        cx - shieldW * 0.44f,
+                        shieldCenterY + shieldH * 0.12f
+                    )
+                    lineTo(cx - shieldW * 0.5f, shieldCenterY - shieldH * 0.32f)
+                    close()
+                }
+                drawPath(path = shieldPath, color = primaryColor)
+                drawPath(
+                    path = shieldPath,
+                    color = Color.White,
+                    style = Stroke(width = 4f, join = StrokeJoin.Round)
+                )
+
+                // Checkmark inside Shield
+                val lockCheck = Path().apply {
+                    moveTo(cx - 18f, shieldCenterY + 2f)
+                    lineTo(cx - 4f, shieldCenterY + 16f)
+                    lineTo(cx + 22f, shieldCenterY - 12f)
+                }
+                drawPath(
+                    path = lockCheck,
+                    color = Color.White,
+                    style = Stroke(width = 6f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                )
+
+                // Orbiting Sync Nodes (Representing multi-device recovery)
+                val node1 = Offset(
+                    cx + cos(phase) * (w * 0.36f),
+                    shieldCenterY + sin(phase) * (h * 0.24f)
+                )
+                val node2 = Offset(
+                    cx + cos(phase + PI.toFloat()) * (w * 0.36f),
+                    shieldCenterY + sin(phase + PI.toFloat()) * (h * 0.24f)
+                )
+                drawCircle(color = secondaryColor, radius = 14f, center = node1)
+                drawCircle(color = Color.White, radius = 6f, center = node1)
+                drawCircle(color = secondaryColor, radius = 14f, center = node2)
+                drawCircle(color = Color.White, radius = 6f, center = node2)
             }
         }
     }
@@ -674,15 +780,7 @@ fun CloudAuthScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFF0F172A),
-                        Color(0xFF1E293B),
-                        colors.background
-                    )
-                )
-            )
+            .background(colors.background)
             .padding(16.dp)
             .testTag("cloud_auth_screen"),
         contentAlignment = Alignment.Center
@@ -690,91 +788,57 @@ fun CloudAuthScreen(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .widthIn(max = 520.dp),
+                .widthIn(max = 500.dp),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = colors.cardSurface),
             border = BorderStroke(1.dp, colors.subtleBorder),
-            elevation = CardDefaults.cardElevation(defaultElevation = 14.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                // Top Brand Header (Zero Technical Jargon)
-                Box(
+                // Clean Minimalist Brand Header (No cloud/stars subtitle)
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            Brush.linearGradient(
-                                listOf(Color(0xFF0F172A), Color(0xFF1E3A8A))
-                            )
-                        )
-                        .padding(vertical = 22.dp, horizontal = 20.dp),
-                    contentAlignment = Alignment.Center
+                        .padding(top = 24.dp, start = 20.dp, end = 20.dp, bottom = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(
-                            modifier = Modifier
-                                .size(60.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.14f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AccountBalanceWallet,
-                                contentDescription = null,
-                                tint = Color(0xFF6EE7B7),
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "تطبيق سجل الديون والمحاسبة الاحترافي",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(colors.primaryInteractiveSoft),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AccountBalanceWallet,
+                            contentDescription = null,
+                            tint = colors.primaryInteractive,
+                            modifier = Modifier.size(30.dp)
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CloudDone,
-                                contentDescription = null,
-                                tint = Color(0xFF6EE7B7),
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFCBD5E1),
-                                textAlign = TextAlign.Center
-                            )
-                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "نظام سجل الديون والمحاسبة",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = colors.textPrimary,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
 
-                        if (onReopenWelcomeIntro != null) {
-                            Spacer(modifier = Modifier.height(6.dp))
-                            TextButton(
-                                onClick = onReopenWelcomeIntro,
-                                modifier = Modifier.testTag("reopen_welcome_tour_button")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
-                                    contentDescription = null,
-                                    tint = Color(0xFF6EE7B7),
-                                    modifier = Modifier.size(15.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "عرض البطاقة التعريفية ومميزات التطبيق",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = Color(0xFF6EE7B7)
-                                )
-                            }
+                    if (onReopenWelcomeIntro != null) {
+                        TextButton(
+                            onClick = onReopenWelcomeIntro,
+                            modifier = Modifier.testTag("reopen_welcome_tour_button")
+                        ) {
+                            Text(
+                                text = "عرض جولة الترحيب التعريفية",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = colors.primaryInteractive
+                            )
                         }
                     }
                 }
@@ -782,7 +846,7 @@ fun CloudAuthScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
                     // Mode Switch Tabs (Create New Office vs Sign In)
                     Row(
@@ -816,14 +880,16 @@ fun CloudAuthScreen(
                                     imageVector = Icons.Default.PersonAdd,
                                     contentDescription = null,
                                     tint = if (isSignUp) Color.White else colors.textSecondary,
-                                    modifier = Modifier.size(17.dp)
+                                    modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "إنشاء حساب مكتب جديد",
+                                    text = "إنشاء حساب جديد",
                                     style = MaterialTheme.typography.labelLarge,
                                     color = if (isSignUp) Color.White else colors.textSecondary,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    softWrap = false
                                 )
                             }
                         }
@@ -851,14 +917,16 @@ fun CloudAuthScreen(
                                     imageVector = Icons.Default.Login,
                                     contentDescription = null,
                                     tint = if (isSignIn) Color.White else colors.textSecondary,
-                                    modifier = Modifier.size(17.dp)
+                                    modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "تسجيل الدخول",
                                     style = MaterialTheme.typography.labelLarge,
                                     color = if (isSignIn) Color.White else colors.textSecondary,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    softWrap = false
                                 )
                             }
                         }
@@ -1120,9 +1188,11 @@ fun CloudAuthScreen(
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "جارٍ فتح الحساب ومزامنة السجل...",
+                                text = "جارٍ فتح الحساب...",
                                 color = Color.White,
-                                style = MaterialTheme.typography.titleSmall
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         } else {
                             Icon(
@@ -1136,31 +1206,23 @@ fun CloudAuthScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = if (authMode == AuthMode.SIGN_UP)
-                                    "إنشاء حساب مكتب جديد والبدء بسجل نظيف"
+                                    "إنشاء حساب مكتب جديد"
                                 else
-                                    "تسجيل الدخول واسترجاع بيانات المكتب",
+                                    "تسجيل الدخول إلى حسابي",
                                 color = Color.White,
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     HorizontalDivider(color = colors.subtleBorder)
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(
-                        text = "جميع حساباتك وسجلاتك محفوظة بأمان تام وخاصة بمكتبك فقط، ويمكنك فتحها من أي هاتف آخر في أي وقت.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.textMuted,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Prominent Developer Credit Card at the bottom of the Sign-In / Sign-Up screen
+                    // Compact Elegant Developer Footer at the bottom of the Sign-In / Sign-Up screen
                     DeveloperCreditCard(darkStyle = false)
                 }
             }

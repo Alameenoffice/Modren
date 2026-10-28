@@ -107,7 +107,7 @@ fun DebtorsListScreen(
         modifier = Modifier
             .fillMaxSize()
             .testTag("debtors_list_screen"),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
@@ -521,23 +521,29 @@ private fun DebtorSummaryCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Quick Actions Row
+            // Primary Quick Actions Row (Single-Line Unbroken Text Buttons)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (summary.isSettled) {
                     Button(
                         onClick = onShowClearance,
-                        modifier = Modifier.weight(1.2f),
+                        modifier = Modifier.weight(1.1f),
                         colors = ButtonDefaults.buttonColors(containerColor = colors.paymentEmerald),
                         shape = RoundedCornerShape(10.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 9.dp)
                     ) {
                         Icon(Icons.Default.Verified, contentDescription = null, modifier = Modifier.size(15.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("سند براءة ذمة", style = MaterialTheme.typography.labelLarge, color = Color.White)
+                        Text(
+                            text = "سند براءة ذمة",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color.White,
+                            maxLines = 1,
+                            softWrap = false
+                        )
                     }
                 } else {
                     Button(
@@ -545,11 +551,17 @@ private fun DebtorSummaryCard(
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = colors.paymentEmerald),
                         shape = RoundedCornerShape(10.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 9.dp)
                     ) {
                         Icon(Icons.Default.Payments, contentDescription = null, modifier = Modifier.size(15.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("تسديد", style = MaterialTheme.typography.labelLarge, color = Color.White)
+                        Text(
+                            text = "تسديد",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color.White,
+                            maxLines = 1,
+                            softWrap = false
+                        )
                     }
                 }
 
@@ -558,7 +570,7 @@ private fun DebtorSummaryCard(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp),
                     border = BorderStroke(1.dp, colors.debtCrimson.copy(alpha = 0.5f)),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 9.dp)
                 ) {
                     Icon(
                         Icons.Default.Add,
@@ -567,7 +579,13 @@ private fun DebtorSummaryCard(
                         modifier = Modifier.size(15.dp)
                     )
                     Spacer(modifier = Modifier.width(3.dp))
-                    Text("إضافة دين", style = MaterialTheme.typography.labelLarge, color = colors.debtCrimson)
+                    Text(
+                        text = "إضافة دين",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = colors.debtCrimson,
+                        maxLines = 1,
+                        softWrap = false
+                    )
                 }
 
                 OutlinedButton(
@@ -575,7 +593,7 @@ private fun DebtorSummaryCard(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp),
                     border = BorderStroke(1.dp, colors.subtleBorder),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 9.dp)
                 ) {
                     Icon(
                         Icons.Default.Description,
@@ -584,48 +602,63 @@ private fun DebtorSummaryCard(
                         modifier = Modifier.size(15.dp)
                     )
                     Spacer(modifier = Modifier.width(3.dp))
-                    Text("كشف حساب", style = MaterialTheme.typography.labelLarge, color = colors.primaryInteractive)
+                    Text(
+                        text = "كشف حساب",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = colors.primaryInteractive,
+                        maxLines = 1,
+                        softWrap = false
+                    )
                 }
+            }
 
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Secondary Management & WhatsApp Actions Row (Never cramped or overlapped)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 IconButton(
                     onClick = onSendWhatsAppReminder,
                     modifier = Modifier
-                        .size(34.dp)
+                        .size(38.dp)
                         .testTag("whatsapp_reminder_${debtor.id}")
                 ) {
                     Icon(
                         Icons.Default.Share,
                         contentDescription = "تذكير بالدين عبر واتساب",
                         tint = colors.paymentEmerald,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(19.dp)
                     )
                 }
 
                 IconButton(
                     onClick = onEdit,
                     modifier = Modifier
-                        .size(34.dp)
+                        .size(38.dp)
                         .testTag("edit_debtor_${debtor.id}")
                 ) {
                     Icon(
                         Icons.Default.Edit,
                         contentDescription = "تعديل المدين",
                         tint = colors.textSecondary,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(19.dp)
                     )
                 }
 
                 IconButton(
                     onClick = onRequestDelete,
                     modifier = Modifier
-                        .size(34.dp)
+                        .size(38.dp)
                         .testTag("delete_debtor_${debtor.id}")
                 ) {
                     Icon(
                         Icons.Default.DeleteOutline,
                         contentDescription = "حذف المدين",
                         tint = colors.debtCrimson,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(19.dp)
                     )
                 }
             }
@@ -670,7 +703,7 @@ fun DebtorStatementScreen(
         modifier = Modifier
             .fillMaxSize()
             .testTag("debtor_statement_screen"),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
