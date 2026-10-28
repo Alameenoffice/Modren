@@ -473,7 +473,7 @@ fun ReportsScreen(
                                     fileName = "report_${selectedTab.name.lowercase()}.csv",
                                     mimeType = "text/csv",
                                     contentBytes = csv.toByteArray(Charsets.UTF_8),
-                                    shareTitle = "تصدير ${selectedTab.labelAr} (Excel CSV)"
+                                    shareTitle = "تصدير ${selectedTab.labelAr} - ملف إكسل (Excel)"
                                 )
                             },
                             modifier = Modifier
@@ -483,7 +483,7 @@ fun ReportsScreen(
                         ) {
                             Icon(Icons.Default.FileDownload, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("تصدير Excel CSV")
+                            Text("تصدير ملف إكسل (Excel)")
                         }
 
                         Button(

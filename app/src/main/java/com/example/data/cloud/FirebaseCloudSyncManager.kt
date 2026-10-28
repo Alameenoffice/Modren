@@ -41,8 +41,8 @@ data class CloudAccountBundle(
 
 object FirebaseCloudSyncManager {
 
-    // Actual Firebase Project Configuration (mizan-debt)
-    const val API_KEY = "AIzaSyANINqHh_7whX_qbQeuJYTfNduSxHIqStc"
+    // Exact Firebase Project Configuration (mizan-debt)
+    const val API_KEY = "AIzaSyANInqHh_7whX_qbQeuJYTfNduSxHIqGtc"
     const val AUTH_DOMAIN = "mizan-debt.firebaseapp.com"
     const val PROJECT_ID = "mizan-debt"
     const val STORAGE_BUCKET = "mizan-debt.firebasestorage.app"
@@ -67,7 +67,7 @@ object FirebaseCloudSyncManager {
     }
 
     // =========================================================================
-    // 1. FIREBASE AUTHENTICATION (Sign Up, Sign In, Password Reset, Token Refresh)
+    // 1. CLOUD ACCOUNT AUTHENTICATION (Sign Up, Sign In, Password Reset)
     // =========================================================================
 
     suspend fun signUpWithEmailPassword(
@@ -99,10 +99,10 @@ object FirebaseCloudSyncManager {
                     )
                 )
             } else {
-                Result.failure(Exception(parseFirebaseAuthError(body)))
+                Result.failure(Exception(parseFriendlyArabicAuthError(body)))
             }
-        } catch (e: Exception) {
-            Result.failure(Exception("تعذر الاتصال بخادم الحسابات السحابية: ${e.localizedMessage ?: "تحقق من اتصال الإنترنت"}"))
+        } catch (_: Exception) {
+            Result.failure(Exception("يرجى التأكد من اتصالك بالإنترنت والمحاولة مرة أخرى"))
         }
     }
 
@@ -135,10 +135,10 @@ object FirebaseCloudSyncManager {
                     )
                 )
             } else {
-                Result.failure(Exception(parseFirebaseAuthError(body)))
+                Result.failure(Exception(parseFriendlyArabicAuthError(body)))
             }
-        } catch (e: Exception) {
-            Result.failure(Exception("تعذر الاتصال بخادم تسجيل الدخول: ${e.localizedMessage ?: "تحقق من اتصال الإنترنت"}"))
+        } catch (_: Exception) {
+            Result.failure(Exception("يرجى التأكد من اتصالك بالإنترنت والمحاولة مرة أخرى"))
         }
     }
 
@@ -156,10 +156,10 @@ object FirebaseCloudSyncManager {
             if (code in 200..299) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception(parseFirebaseAuthError(body)))
+                Result.failure(Exception(parseFriendlyArabicAuthError(body)))
             }
-        } catch (e: Exception) {
-            Result.failure(Exception("تعذر إرسال رابط استعادة كلمة المرور: تحقق من اتصال الإنترنت"))
+        } catch (_: Exception) {
+            Result.failure(Exception("يرجى التأكد من اتصالك بالإنترنت لإرسال رابط استعادة كلمة المرور"))
         }
     }
 
@@ -196,7 +196,7 @@ object FirebaseCloudSyncManager {
         }
 
     // =========================================================================
-    // 2. CLOUD FIRESTORE OPERATIONS (users/{uid}/settings, debtors, transactions)
+    // 2. CLOUD DATABASE OPERATIONS (users/{uid}/settings, debtors, transactions)
     // =========================================================================
 
     suspend fun pushSettingsToFirestore(
@@ -359,7 +359,7 @@ object FirebaseCloudSyncManager {
         try {
             val active = ensureFreshSession(session)
 
-            // 1. Fetch users/{uid}/settings/profile (or settings collection)
+            // 1. Fetch users/{uid}/settings/profile
             var cloudSettings: CloudUserSettings? = null
             val (settingsCode, settingsBody) = executeJsonRequest(
                 urlStr = "$FIRESTORE_BASE_URL/users/${active.uid}/settings/profile",
@@ -438,7 +438,7 @@ object FirebaseCloudSyncManager {
     }
 
     // =========================================================================
-    // 3. PER-USER LOCAL OFFLINE PERSISTENCE CACHE (LocalStorage / File Snapshot)
+    // 3. PER-USER LOCAL CACHE
     // =========================================================================
 
     fun saveUserOfflineSnapshot(
@@ -491,7 +491,7 @@ object FirebaseCloudSyncManager {
     }
 
     // =========================================================================
-    // INTERNAL HELPERS & FIRESTORE VALUE PARSERS
+    // INTERNAL HELPERS & PURE ARABIC ERROR TRANSLATION
     // =========================================================================
 
     private fun fsString(value: String): JSONObject =
@@ -578,7 +578,7 @@ object FirebaseCloudSyncManager {
         )
     }
 
-    private fun parseFirebaseAuthError(errorBody: String): String {
+    private fun parseFriendlyArabicAuthError(errorBody: String): String {
         return try {
             val code = JSONObject(errorBody)
                 .optJSONObject("error")
@@ -586,10 +586,11 @@ object FirebaseCloudSyncManager {
                 .orEmpty()
             when {
                 code.contains("EMAIL_EXISTS") ->
-                    "هذا البريد الإلكتروني مسجل مسبقاً. يرجى اختيار «تسجيل الدخول» بدلاً من إنشاء حساب جديد."
+                    "البريد الإلكتروني مسجل مسبقاً، يرجى اختيار تسجيل الدخول."
                 code.contains("INVALID_LOGIN_CREDENTIALS") ||
                     code.contains("INVALID_PASSWORD") ||
-                    code.contains("EMAIL_NOT_FOUND") ->
+                    code.contains("EMAIL_NOT_FOUND") ||
+                    code.contains("USER_NOT_FOUND") ->
                     "البريد الإلكتروني أو كلمة المرور غير صحيحة."
                 code.contains("WEAK_PASSWORD") ->
                     "كلمة المرور ضعيفة، يرجى إدخال 6 أحرف أو أرقام على الأقل."
@@ -598,14 +599,14 @@ object FirebaseCloudSyncManager {
                 code.contains("TOO_MANY_ATTEMPTS_TRY_LATER") ->
                     "تم إجراء محاولات كثيرة، يرجى الانتظار قليلاً ثم المحاولة مرة أخرى."
                 code.contains("USER_DISABLED") ->
-                    "تم إيقاف هذا الحساب من قبل الإدارة."
-                code.isNotBlank() ->
-                    "خطأ في المصادقة السحابية ($code)"
+                    "تم إيقاف هذا الحساب، يرجى التواصل مع الدعم الفني."
+                code.contains("NETWORK") ->
+                    "يرجى التأكد من اتصالك بالإنترنت."
                 else ->
-                    "تعذر إتمام عملية المصادقة، يرجى التحقق من البيانات والمحاولة مجدداً."
+                    "يرجى التأكد من صحة البريد الإلكتروني وكلمة المرور أو اتصالك بالإنترنت."
             }
         } catch (_: Exception) {
-            "تعذر إتمام عملية المصادقة، يرجى التحقق من البريد وكلمة المرور."
+            "يرجى التأكد من صحة البريد الإلكتروني وكلمة المرور أو اتصالك بالإنترنت."
         }
     }
 

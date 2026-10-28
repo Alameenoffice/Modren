@@ -4,13 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#0F172A" />
-  <title>سجل الديون السحابي | نظام المحاسبة والعملات المزدوج (IQD & USD)</title>
+  <title>تطبيق سجل الديون والمحاسبة الاحترافي</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
 
-  <!-- Firebase App, Auth, and Firestore SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -79,7 +78,7 @@
     }
     .btn {
       padding: 8px 15px; border-radius: 10px; font-weight: 600; cursor: pointer; border: 1px solid transparent;
-      display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; transition: 0.15s;
+      display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; transition: 0.15s; text-decoration: none;
     }
     .btn-primary { background: var(--primary); color: #fff; }
     .btn-emerald { background: var(--emerald); color: #fff; }
@@ -114,18 +113,46 @@
       text-align: center; padding: 38px 20px; border: 2px dashed var(--border); border-radius: 18px;
       background: var(--surface); margin: 16px 0;
     }
-    /* Cloud Auth Screen Overlay */
-    #cloudAuthOverlay {
-      position: fixed; inset: 0; background: linear-gradient(160deg, #0F172A 0%, #1E293B 55%, #0F172A 100%);
+
+    /* Animated Welcome Onboarding & Cloud Auth Screen Overlays */
+    #welcomeOnboardingOverlay, #cloudAuthOverlay {
+      position: fixed; inset: 0; background: radial-gradient(circle at top right, #132A4A 0%, #0F172A 55%, #090E1A 100%);
       z-index: 3000; display: none; place-items: center; padding: 16px; overflow-y: auto;
     }
-    #cloudAuthOverlay.open { display: grid; }
+    #welcomeOnboardingOverlay.open, #cloudAuthOverlay.open { display: grid; }
+    .welcome-card {
+      background: rgba(17, 28, 51, 0.96); color: #fff; border-radius: 26px; max-width: 550px; width: 100%;
+      padding: 24px; border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      text-align: center; animation: fadeInCard 0.45s ease-out;
+    }
+    @keyframes fadeInCard {
+      from { opacity: 0; transform: translateY(14px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes floatPulse {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-6px) scale(1.05); }
+    }
+    .welcome-hero-icon {
+      width: 76px; height: 76px; border-radius: 50%; margin: 12px auto;
+      background: linear-gradient(135deg, rgba(16,185,129,0.28), rgba(37,99,235,0.22));
+      display: grid; place-items: center; font-size: 2rem; color: #6EE7B7;
+      border: 1px solid rgba(110,231,183,0.4); animation: floatPulse 3s infinite ease-in-out;
+    }
+    .dev-credit-box {
+      background: rgba(15, 23, 42, 0.92); border: 1.5px solid rgba(16, 185, 129, 0.55);
+      border-radius: 18px; padding: 15px; margin-top: 14px; text-align: center; color: #fff;
+    }
+    .dev-credit-light {
+      background: var(--surface-elevated); border: 1.5px solid rgba(16, 185, 129, 0.5);
+      border-radius: 18px; padding: 15px; margin-top: 14px; text-align: center; color: var(--text-primary);
+    }
     .auth-card {
-      background: var(--surface); color: var(--text-primary); border-radius: 24px; max-width: 490px; width: 100%;
+      background: var(--surface); color: var(--text-primary); border-radius: 24px; max-width: 500px; width: 100%;
       overflow: hidden; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.4);
     }
     .auth-header {
-      background: linear-gradient(135deg, #0F172A, #1E3A8A); color: #fff; text-align: center; padding: 26px 20px;
+      background: linear-gradient(135deg, #0F172A, #1E3A8A); color: #fff; text-align: center; padding: 24px 20px;
     }
     .auth-tabs {
       display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--surface-elevated);
@@ -136,6 +163,11 @@
       background: transparent; color: var(--text-secondary); font-size: 0.88rem;
     }
     .auth-tab-btn.active { background: var(--primary); color: #fff; }
+    .slide-dot {
+      width: 9px; height: 9px; border-radius: 99px; background: rgba(255,255,255,0.28);
+      display: inline-block; cursor: pointer; transition: 0.25s;
+    }
+    .slide-dot.active { width: 26px; background: #10B981; }
     @media (max-width: 768px) {
       .sidebar { display: none; }
       .mobile-nav {
@@ -146,7 +178,7 @@
     }
     .mobile-nav { display: none; }
     @media print {
-      .sidebar, .topbar, .mobile-nav, .no-print, #cloudAuthOverlay { display: none !important; }
+      .sidebar, .topbar, .mobile-nav, .no-print, #welcomeOnboardingOverlay, #cloudAuthOverlay { display: none !important; }
       .content { padding: 0; }
       .card { box-shadow: none; border: 1px solid #cbd5e1; }
     }
@@ -154,15 +186,59 @@
 </head>
 <body>
 
-  <!-- 1. FIREBASE CLOUD AUTH SCREEN (Sign Up / Sign In / Password Reset) -->
+  <!-- 0. INTERACTIVE ANIMATED WELCOME ONBOARDING SCREEN (100% Offline Ready) -->
+  <div id="welcomeOnboardingOverlay">
+    <div class="welcome-card">
+      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.45);color:#6EE7B7;padding:5px 14px;border-radius:99px;font-size:0.8rem;font-weight:700">
+        ✨ حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت
+      </div>
+
+      <div class="welcome-hero-icon" id="welcomeSlideIcon">💼</div>
+      <div id="welcomeSlideBadge" style="color:#10B981;font-weight:700;font-size:0.86rem">مرحباً بك في النظام المتكامل</div>
+      <h2 id="welcomeSlideTitle" style="font-size:1.35rem;margin:6px 0 8px;color:#fff">تطبيق سجل الديون والمحاسبة الاحترافي</h2>
+      <p id="welcomeSlideDesc" style="font-size:0.9rem;color:#CBD5E1;line-height:1.65;margin-bottom:14px">
+        نظام محاسبي متكامل مصمم خصيصاً لأصحاب المكاتب والشركات والتجار لإدارة الحسابات والذمم المالية بأعلى درجات الدقة والوضوح.
+      </p>
+
+      <div id="welcomeSlidePoints" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 14px;text-align:right;font-size:0.84rem;color:#F1F5F9;display:flex;flex-direction:column;gap:7px">
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0">
+        <button class="btn btn-outline btn-sm" style="color:#CBD5E1;border-color:rgba(255,255,255,0.2)" onclick="changeWelcomeSlide(-1)">◀ السابق</button>
+        <div style="display:flex;gap:6px;align-items:center" id="welcomeDotsContainer">
+          <span class="slide-dot active" onclick="setWelcomeSlide(0)"></span>
+          <span class="slide-dot" onclick="setWelcomeSlide(1)"></span>
+          <span class="slide-dot" onclick="setWelcomeSlide(2)"></span>
+        </div>
+        <button class="btn btn-outline btn-sm" style="color:#6EE7B7;border-color:rgba(110,231,183,0.35)" onclick="changeWelcomeSlide(1)">التالي ▶</button>
+      </div>
+
+      <!-- Prominent Developer Credit Card -->
+      <div class="dev-credit-box">
+        <div style="font-weight:700;font-size:0.98rem;color:#fff">تم التصميم والتطوير بواسطة: أحمد أبو رسلان</div>
+        <div style="font-size:0.82rem;color:#6EE7B7;font-weight:700;margin:4px 0 10px">للتواصل والدعم الفني: 07512362567</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <a href="tel:07512362567" class="btn btn-primary" style="justify-content:center">📞 اتصال مباشر</a>
+          <a href="https://wa.me/9647512362567" target="_blank" rel="noopener" class="btn btn-emerald" style="justify-content:center">💬 واتساب مباشر</a>
+        </div>
+      </div>
+
+      <button class="btn btn-emerald" style="width:100%;justify-content:center;padding:13px;font-size:1.02rem;margin-top:16px;border-radius:14px" onclick="startNowFromWelcome()">
+        🚀 البدء الآن
+      </button>
+    </div>
+  </div>
+
+  <!-- 1. ACCOUNT SIGN UP / SIGN IN SCREEN -->
   <div id="cloudAuthOverlay">
     <div class="auth-card">
       <div class="auth-header">
-        <div style="width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,0.14);display:grid;place-items:center;margin:0 auto 10px;font-size:1.4rem;color:#6EE7B7;font-weight:700">د/$</div>
-        <h2 style="font-size:1.3rem">نظام سجل الديون والمحاسبة السحابي</h2>
-        <p style="font-size:0.82rem;color:#CBD5E1;margin-top:4px">مزامنة سحابية فورية (Firebase Auth & Firestore) + عمل كامل بدون إنترنت</p>
+        <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.14);display:grid;place-items:center;margin:0 auto 10px;font-size:1.35rem;color:#6EE7B7;font-weight:700">د/$</div>
+        <h2 style="font-size:1.25rem">تطبيق سجل الديون والمحاسبة الاحترافي</h2>
+        <p style="font-size:0.82rem;color:#CBD5E1;margin-top:4px">حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت</p>
+        <button class="btn btn-outline btn-sm" style="margin-top:8px;color:#6EE7B7;border-color:rgba(110,231,183,0.4)" onclick="reopenWelcomeScreen()">✨ عرض جولة الترحيب ومميزات التطبيق</button>
       </div>
-      <div style="padding:22px">
+      <div style="padding:20px">
         <div class="auth-tabs">
           <button class="auth-tab-btn active" id="tabBtnSignUp" onclick="setAuthMode('SIGNUP')">إنشاء حساب مكتب جديد</button>
           <button class="auth-tab-btn" id="tabBtnSignIn" onclick="setAuthMode('SIGNIN')">تسجيل الدخول</button>
@@ -192,9 +268,19 @@
           إنشاء حساب مكتب جديد والبدء بسجل نظيف
         </button>
 
-        <p style="text-align:center;font-size:0.76rem;color:var(--text-muted);margin-top:14px">
-          جميع بياناتك معزولة ومحمية سحابياً تحت مسار حسابك الخاص (users/{uid}) مع دعم العمل بدون إنترنت.
+        <p style="text-align:center;font-size:0.77rem;color:var(--text-muted);margin-top:12px">
+          جميع حساباتك وسجلاتك محفوظة بأمان تام وخاصة بمكتبك فقط، ويمكنك فتحها من أي هاتف آخر في أي وقت.
         </p>
+
+        <!-- Developer Credit Card in Auth Footer -->
+        <div class="dev-credit-light">
+          <div style="font-weight:700;font-size:0.92rem">تم التصميم والتطوير بواسطة: أحمد أبو رسلان</div>
+          <div style="font-size:0.8rem;color:var(--emerald);font-weight:700;margin:4px 0 8px">رقم الهاتف والدعم الفني: 07512362567</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <a href="tel:07512362567" class="btn btn-primary btn-sm" style="justify-content:center">📞 اتصال مباشر</a>
+            <a href="https://wa.me/9647512362567" target="_blank" rel="noopener" class="btn btn-emerald btn-sm" style="justify-content:center">💬 واتساب مباشر</a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -202,7 +288,7 @@
   <!-- 2. MAIN APPLICATION SHELL -->
   <div class="office-top-ribbon" onclick="openOfficeSettingsModal()" title="اضغط لتعديل اسم المكتب وسعر الصرف">
     <span>🏢 <span id="ribbonOfficeName">مكتب المحاسبة والتجارة العامة</span> ✎</span>
-    <span id="topRibbonSummary">IQD 0 | USD 0</span>
+    <span id="topRibbonSummary">0 د.ع | 0 $</span>
   </div>
 
   <div class="app-shell">
@@ -212,7 +298,7 @@
           <div class="brand-icon">د/$</div>
           <div>
             <div id="sidebarOfficeName" style="font-weight:700;font-size:1.02rem">مكتب المحاسبة والتجارة العامة</div>
-            <div id="sidebarUserEmail" style="font-size:0.74rem;color:#6EE7B7">سجل الديون السحابي</div>
+            <div id="sidebarUserEmail" style="font-size:0.74rem;color:#6EE7B7">حفظ سحابي آمن ومزامنة تلقائية</div>
           </div>
         </div>
         <button class="nav-item active" onclick="switchTab('dashboard', this)">📊 لوحة التحكم</button>
@@ -223,7 +309,7 @@
       <div style="display:flex;flex-direction:column;gap:8px">
         <div style="background:rgba(255,255,255,0.06);padding:12px;border-radius:12px;text-align:center;font-size:0.8rem;cursor:pointer" onclick="openOfficeSettingsModal()">
           <div id="sidebarFooterOffice" style="color:#6EE7B7;font-weight:700">مكتب المحاسبة والتجارة العامة</div>
-          <div id="cloudStatusBadge" style="color:#94A3B8;margin-top:4px">متصل بالسحابة (Firestore)</div>
+          <div id="cloudStatusBadge" style="color:#94A3B8;margin-top:4px">حفظ سحابي آمن ومزامنة تلقائية</div>
         </div>
         <button class="btn btn-crimson" style="width:100%;justify-content:center" onclick="logoutCloudAccount()">🚪 تسجيل الخروج</button>
       </div>
@@ -233,7 +319,7 @@
       <header class="topbar">
         <div>
           <h2 id="headerOfficeTitle" style="font-size:1.18rem">مكتب المحاسبة والتجارة العامة</h2>
-          <p style="font-size:0.78rem;color:var(--text-muted)">نظام العملات المزدوج السحابي (د.ع IQD | $ USD) • سعر الصرف: <span id="headerExchangeRate">1,500</span> د.ع</p>
+          <p style="font-size:0.78rem;color:var(--text-muted)">حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت • سعر الصرف: <span id="headerExchangeRate">1,500</span> د.ع</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" class="no-print">
           <button class="btn btn-outline" onclick="openOfficeSettingsModal()">🏢 اسم المكتب والصرف</button>
@@ -250,8 +336,8 @@
           <div id="dashboardEmptyState"></div>
           <div class="card" id="dashboardRecentSection">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-              <h3>أحدث الحركات المالية المسجلة (IQD & USD)</h3>
-              <span class="badge badge-usd" id="syncPill">مزامنة سحابية فورية + حفظ محلي</span>
+              <h3>أحدث الحركات المالية المسجلة (الدينار العراقي والدولار الأمريكي)</h3>
+              <span class="badge badge-usd" id="syncPill">حفظ سحابي آمن ومزامنة تلقائية</span>
             </div>
             <table>
               <thead>
@@ -268,8 +354,8 @@
             <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
               <input type="text" id="searchDebtor" placeholder="ابحث باسم المدين أو الهاتف أو العنوان..." oninput="renderAll()" style="max-width:380px;margin:0" />
               <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-emerald" onclick="exportDebtorsCsv()">تصدير Excel (CSV UTF-8-BOM)</button>
-                <button class="btn btn-primary" onclick="window.print()">طباعة / حفظ PDF</button>
+                <button class="btn btn-emerald" onclick="exportDebtorsCsv()">تصدير ملف إكسل (Excel)</button>
+                <button class="btn btn-primary" onclick="window.print()">طباعة / حفظ الكشف</button>
               </div>
             </div>
           </div>
@@ -282,8 +368,8 @@
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
               <h3>كشف الجرد الشامل والتقارير المالية (<span id="reportOfficeTitle"></span>)</h3>
               <div style="display:flex;gap:8px">
-                <button class="btn btn-emerald" onclick="exportTransactionsCsv()">تصدير الحركات Excel CSV</button>
-                <button class="btn btn-primary" onclick="window.print()">طباعة التقرير PDF</button>
+                <button class="btn btn-emerald" onclick="exportTransactionsCsv()">تصدير ملف إكسل (Excel)</button>
+                <button class="btn btn-primary" onclick="window.print()">طباعة التقرير المالي</button>
               </div>
             </div>
             <table>
@@ -298,11 +384,11 @@
         <!-- SETTINGS & BACKUP -->
         <section id="tab-backup" style="display:none">
           <div class="card" style="margin-bottom:16px;border-color:var(--emerald)">
-            <h3>☁️ الحساب السحابي والمزامنة (Firebase Firestore)</h3>
+            <h3>☁️ حساب المكتب والحفظ السحابي الآمن</h3>
             <p style="color:var(--text-secondary);margin:6px 0">البريد المسجل: <strong id="settingsAccountEmail">-</strong></p>
-            <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:14px">مسار العزل السحابي: <code id="settingsAccountPath">users/{uid}/debtors & transactions & settings</code></p>
+            <p style="color:var(--text-muted);font-size:0.84rem;margin-bottom:14px">حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت مع إمكانية فتح حسابك من أي هاتف آخر.</p>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <button class="btn btn-emerald" onclick="forcePushAllToFirestore()">🔄 مزامنة سحابية فورية الآن</button>
+              <button class="btn btn-emerald" onclick="forcePushAllToFirestore()">🔄 مزامنة وحفظ الحسابات الآن</button>
               <button class="btn btn-crimson" onclick="logoutCloudAccount()">🚪 تسجيل الخروج من الحساب</button>
             </div>
           </div>
@@ -312,19 +398,31 @@
             <p style="color:var(--text-secondary);margin:6px 0 14px">يظهر اسم المكتب في الترويسة العلوية، القائمة الجانبية، التقارير المطبوعة، ورسائل ومطالبات واتساب.</p>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <button class="btn btn-primary" onclick="openOfficeSettingsModal()">تعديل اسم المكتب أو سعر الصرف</button>
-              <button class="btn btn-outline" onclick="openPinModal()">🔒 إعداد رمز القفل (PIN من 4 أرقام)</button>
+              <button class="btn btn-outline" onclick="openPinModal()">🔒 إعداد رمز قفل الحماية (4 أرقام)</button>
             </div>
           </div>
 
           <div class="card" style="margin-bottom:16px">
-            <h3>💾 النسخ الاحتياطي الشامل والاستعادة (JSON & Excel CSV)</h3>
-            <p style="color:var(--text-secondary);margin:6px 0 14px">احتفظ بنسخة كاملة من قاعدة البيانات (المدينون والحركات بالدينار والدولار) على جهازك واستعدها في أي وقت.</p>
+            <h3>💾 النسخ الاحتياطي الشامل وتصدير الجداول</h3>
+            <p style="color:var(--text-secondary);margin:6px 0 14px">احتفظ بنسخة احتياطية شاملة لجميع السجلات والحسابات على هاتفك واستعدها في أي وقت بضغطة زر.</p>
             <div style="display:flex;gap:12px;flex-wrap:wrap">
-              <button class="btn btn-emerald" onclick="downloadJsonBackup()">تنزيل نسخة احتياطية كاملة (JSON)</button>
+              <button class="btn btn-emerald" onclick="downloadJsonBackup()">حفظ نسخة احتياطية شاملة على الهاتف</button>
               <label class="btn btn-outline" style="cursor:pointer">
-                استعادة البيانات من ملف JSON
+                استعادة نسخة احتياطية من الهاتف
                 <input type="file" accept=".json" style="display:none" onchange="restoreJsonBackup(event)" />
               </label>
+              <button class="btn btn-primary" onclick="exportDebtorsCsv()">تصدير ملف إكسل (Excel)</button>
+            </div>
+          </div>
+
+          <!-- Developer Credit Card in Settings -->
+          <div class="card" style="margin-bottom:16px;border-color:var(--emerald)">
+            <h3>👨‍💻 تصميم وتطوير التطبيق والدعم الفني</h3>
+            <p style="font-weight:700;font-size:1.02rem;margin:8px 0 4px">تم التصميم والتطوير بواسطة: أحمد أبو رسلان</p>
+            <p style="color:var(--emerald);font-weight:700;margin-bottom:12px">رقم الهاتف للتواصل والدعم الفني: 07512362567</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <a href="tel:07512362567" class="btn btn-primary">📞 اتصال هاتفي مباشر (07512362567)</a>
+              <a href="https://wa.me/9647512362567" target="_blank" rel="noopener" class="btn btn-emerald">💬 مراسلة واتساب مباشرة</a>
             </div>
           </div>
 
@@ -351,7 +449,7 @@
       <h3 style="margin-bottom:12px">تعديل اسم المكتب وسعر الصرف</h3>
       <label>اسم المكتب أو الشركة أو التاجر</label>
       <input type="text" id="editOfficeNameInput" />
-      <label>سعر صرف الدولار مقابل الدينار (1 USD = ? IQD)</label>
+      <label>سعر صرف الدولار مقابل الدينار العراقي (1$ = ? د.ع)</label>
       <input type="number" id="editExchangeRateInput" />
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
         <button class="btn btn-outline" onclick="closeModals()">إلغاء</button>
@@ -363,8 +461,8 @@
   <!-- PIN Lock Setup Modal -->
   <div class="modal-backdrop" id="pinSetupModal">
     <div class="modal">
-      <h3 style="margin-bottom:10px">🔒 إعداد رمز القفل (PIN من 4 أرقام)</h3>
-      <label>أدخل رمز PIN من 4 أرقام (أو اتركه فارغاً لإلغاء القفل)</label>
+      <h3 style="margin-bottom:10px">🔒 إعداد رمز قفل الحماية (4 أرقام)</h3>
+      <label>أدخل رمز الحماية من 4 أرقام (أو اتركه فارغاً لإلغاء القفل)</label>
       <input type="password" id="pinSetupInput" maxlength="4" placeholder="4 أرقام" />
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
         <button class="btn btn-outline" onclick="closeModals()">إلغاء</button>
@@ -377,7 +475,7 @@
   <div class="modal-backdrop" id="pinLockOverlay" style="background:rgba(15,23,42,0.96);z-index:2000">
     <div class="modal" style="text-align:center;max-width:380px">
       <h3 id="lockOfficeTitle" style="color:var(--emerald);margin-bottom:6px"></h3>
-      <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:14px">التطبيق محمي برمز مرور (PIN من 4 أرقام)</p>
+      <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:14px">التطبيق محمي برمز مرور شخصي (4 أرقام)</p>
       <input type="password" id="unlockPinInput" maxlength="4" placeholder="••••" style="text-align:center;font-size:1.4rem;letter-spacing:8px" />
       <div id="pinErrorMsg" style="color:var(--crimson);font-size:0.82rem;margin-bottom:8px;display:none">رمز المرور غير صحيح!</div>
       <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="verifyPinUnlock()">فتح القفل</button>
@@ -398,11 +496,11 @@
       <input type="date" id="debtorDueDate" />
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
-          <label>سقف الائتمان (د.ع IQD)</label>
+          <label>سقف الائتمان (د.ع)</label>
           <input type="number" id="debtorLimitIqd" value="0" />
         </div>
         <div>
-          <label>سقف الائتمان ($ USD)</label>
+          <label>سقف الائتمان ($)</label>
           <input type="number" id="debtorLimitUsd" value="0" />
         </div>
       </div>
@@ -431,8 +529,8 @@
         <div>
           <label>عملة المبلغ المستلم/المسجل</label>
           <select id="txCurrency" onchange="updateConversionPreview()">
-            <option value="IQD">دينار عراقي (د.ع IQD)</option>
-            <option value="USD">دولار أمريكي ($ USD)</option>
+            <option value="IQD">دينار عراقي (د.ع)</option>
+            <option value="USD">دولار أمريكي ($)</option>
           </select>
         </div>
       </div>
@@ -505,16 +603,89 @@
 
   <script>
     // ============================================================================
-    // FIREBASE CONFIGURATION (mizan-debt)
+    // EXACT FIREBASE CONFIGURATION (mizan-debt)
     // ============================================================================
     const firebaseConfig = {
-      apiKey: "AIzaSyANINqHh_7whX_qbQeuJYTfNduSxHIqStc",
+      apiKey: "AIzaSyANInqHh_7whX_qbQeuJYTfNduSxHIqGtc",
       authDomain: "mizan-debt.firebaseapp.com",
       projectId: "mizan-debt",
       storageBucket: "mizan-debt.firebasestorage.app",
       messagingSenderId: "117431611267",
       appId: "1:117431611267:web:1bdaa3d15290991462d0b6"
     };
+
+    // Interactive Welcome Slides Data
+    const welcomeSlides = [
+      {
+        icon: '💼',
+        badge: 'مرحباً بك في النظام المتكامل',
+        title: 'تطبيق سجل الديون والمحاسبة الاحترافي',
+        desc: 'نظام محاسبي متكامل مصمم خصيصاً لأصحاب المكاتب والشركات والتجار لإدارة الحسابات والذمم المالية بأعلى درجات الدقة والوضوح.',
+        points: [
+          '✓ حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت',
+          '✓ واجهة عربية أنيقة وسريعة تدعم الوضع الليلي والنهاري',
+          '✓ ترويسة رسمية باسم مكتبك أو شركتك في جميع التقارير والوصولات'
+        ]
+      },
+      {
+        icon: '💱',
+        badge: 'إدارة مالية مزدوجة العملة',
+        title: 'إدارة الديون والتسديدات بالدينار العراقي والدولار الأمريكي',
+        desc: 'سجّل الديون والدفعات المستلمة بالدينار العراقي (د.ع) أو الدولار الأمريكي ($) بشكل مستقل أو مع تصريف تلقائي فوري حسب سعر الصرف.',
+        points: [
+          '✓ فصل تام ودقيق لأرصدة الدينار العراقي وأرصدة الدولار الأمريكي',
+          '✓ إمكانية استلام دفعة بعملة وتصريفها تلقائياً لتسديد العملة الأخرى',
+          '✓ إصدار وصولات قبض رسمية وسندات براءة ذمة ومشاركتها عبر واتساب'
+        ]
+      },
+      {
+        icon: '📊',
+        badge: 'جرد شامل وأمان تام للحسابات',
+        title: 'الجرد اليومي والشهري والسنوي وفتح حسابك من أي هاتف',
+        desc: 'تابع حركة مكتبك المالي بتقارير يومية وشهرية وسنوية مفصلة، مع حفظ آمن لحساباتك يتيح لك فتحها واسترجاعها من أي هاتف آخر في أي وقت.',
+        points: [
+          '✓ جرد يومي وشهري وسنوي دقيق مع تصدير ملف إكسل (Excel) وطباعة التقارير',
+          '✓ حفظ الحسابات بأمان تام مع إمكانية فتحها من أي هاتف آخر ببريدك وكلمة مرورك',
+          '✓ نسخ احتياطي شامل على الهاتف وحماية إضافية برمز قفل شخصي'
+        ]
+      }
+    ];
+    let currentWelcomeSlide = 0;
+
+    function renderWelcomeSlide() {
+      const s = welcomeSlides[currentWelcomeSlide];
+      document.getElementById('welcomeSlideIcon').textContent = s.icon;
+      document.getElementById('welcomeSlideBadge').textContent = s.badge;
+      document.getElementById('welcomeSlideTitle').textContent = s.title;
+      document.getElementById('welcomeSlideDesc').textContent = s.desc;
+      document.getElementById('welcomeSlidePoints').innerHTML = s.points.map(p => `<div>${p}</div>`).join('');
+      const dots = document.querySelectorAll('#welcomeDotsContainer .slide-dot');
+      dots.forEach((d, idx) => d.classList.toggle('active', idx === currentWelcomeSlide));
+    }
+
+    function setWelcomeSlide(idx) {
+      currentWelcomeSlide = idx;
+      renderWelcomeSlide();
+    }
+
+    function changeWelcomeSlide(delta) {
+      currentWelcomeSlide = (currentWelcomeSlide + delta + welcomeSlides.length) % welcomeSlides.length;
+      renderWelcomeSlide();
+    }
+
+    function startNowFromWelcome() {
+      localStorage.setItem('mizan_seen_welcome_v1', '1');
+      document.getElementById('welcomeOnboardingOverlay').classList.remove('open');
+      document.getElementById('cloudAuthOverlay').classList.add('open');
+    }
+
+    function reopenWelcomeScreen() {
+      renderWelcomeSlide();
+      document.getElementById('cloudAuthOverlay').classList.remove('open');
+      document.getElementById('welcomeOnboardingOverlay').classList.add('open');
+    }
+
+    renderWelcomeSlide();
 
     let auth = null;
     let db = null;
@@ -529,11 +700,10 @@
         firebase.initializeApp(firebaseConfig);
         auth = firebase.auth();
         db = firebase.firestore();
-        // Enable Firestore Offline Persistence
         db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
       }
     } catch (e) {
-      console.warn('Firebase init fallback to local mode:', e);
+      console.warn('Cloud init fallback:', e);
     }
 
     function getUserStorageKey(uid) { return `mizan_debt_data_${uid || 'guest'}`; }
@@ -545,7 +715,6 @@
       pinCode: ''
     };
 
-    // Clean initial state with zero mock data
     let state = {
       debtors: [],
       transactions: []
@@ -572,9 +741,6 @@
       renderAll();
     }
 
-    // ============================================================================
-    // FIREBASE AUTH & FIRESTORE REALTIME SYNC (users/{uid}/...)
-    // ============================================================================
     function setAuthMode(mode) {
       currentAuthMode = mode;
       document.getElementById('tabBtnSignUp').classList.toggle('active', mode === 'SIGNUP');
@@ -648,7 +814,7 @@
             throw new Error('OFFLINE_FALLBACK');
           }
         } catch (err) {
-          showAuthError(translateFirebaseError(err));
+          showAuthError(translateFriendlyArabicError(err));
         }
       } else {
         try {
@@ -661,7 +827,7 @@
             throw new Error('OFFLINE_FALLBACK');
           }
         } catch (err) {
-          showAuthError(translateFirebaseError(err));
+          showAuthError(translateFriendlyArabicError(err));
         }
       }
     }
@@ -675,20 +841,22 @@
       try {
         if (auth) {
           await auth.sendPasswordResetEmail(email);
-          showAuthInfo(`تم إرسال رابط استعادة كلمة المرور إلى (${email}) بنجاح.`);
+          showAuthInfo(`تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني (${email}) بنجاح.`);
         }
       } catch (err) {
-        showAuthError(translateFirebaseError(err));
+        showAuthError(translateFriendlyArabicError(err));
       }
     }
 
-    function translateFirebaseError(err) {
-      const code = (err && err.code) ? err.code : '';
-      if (code.includes('email-already-in-use')) return 'هذا البريد الإلكتروني مسجل مسبقاً. اختر «تسجيل الدخول».';
-      if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) return 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
-      if (code.includes('weak-password')) return 'كلمة المرور ضعيفة، يجب أن تتكون من 6 أحرف على الأقل.';
-      if (code.includes('invalid-email')) return 'صيغة البريد الإلكتروني غير صحيحة.';
-      return (err && err.message) ? err.message : 'تعذر الاتصال بالخادم السحابي.';
+    function translateFriendlyArabicError(err) {
+      const code = (err && err.code) ? String(err.code).toLowerCase() : '';
+      const msg = (err && err.message) ? String(err.message).toLowerCase() : '';
+      if (code.includes('email-already-in-use') || msg.includes('email_exists')) return 'البريد الإلكتروني مسجل مسبقاً';
+      if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found') || msg.includes('invalid_login')) return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+      if (code.includes('weak-password')) return 'كلمة المرور ضعيفة، يرجى اختيار 6 أحرف أو أرقام على الأقل';
+      if (code.includes('invalid-email')) return 'يرجى إدخال بريد إلكتروني صحيح';
+      if (code.includes('network') || msg.includes('network') || msg.includes('offline')) return 'يرجى التأكد من اتصالك بالإنترنت';
+      return 'البريد الإلكتروني أو كلمة المرور غير صحيحة أو يرجى التأكد من اتصالك بالإنترنت';
     }
 
     function detachFirestoreListeners() {
@@ -702,9 +870,8 @@
       detachFirestoreListeners();
       loadLocalCacheForUser(user.uid);
 
-      document.getElementById('sidebarUserEmail').textContent = user.email || 'حساب سحابي نشط';
+      document.getElementById('sidebarUserEmail').textContent = user.email || 'حساب مكتب نشط';
       document.getElementById('settingsAccountEmail').textContent = user.email || '-';
-      document.getElementById('settingsAccountPath').textContent = `users/${user.uid}/debtors & transactions & settings`;
 
       if (!db) return;
       const userRef = db.collection('users').doc(user.uid);
@@ -782,13 +949,25 @@
       for (const t of state.transactions) {
         await userRef.collection('transactions').doc(String(t.id)).set(t, { merge: true });
       }
-      alert('تمت المزامنة السحابية مع Firestore بنجاح!');
+      alert('تم حفظ ومزامنة جميع الحسابات بنجاح!');
+    }
+
+    function showInitialUnauthenticatedScreen() {
+      const seenWelcome = localStorage.getItem('mizan_seen_welcome_v1') === '1';
+      if (!seenWelcome) {
+        document.getElementById('welcomeOnboardingOverlay').classList.add('open');
+        document.getElementById('cloudAuthOverlay').classList.remove('open');
+      } else {
+        document.getElementById('welcomeOnboardingOverlay').classList.remove('open');
+        document.getElementById('cloudAuthOverlay').classList.add('open');
+      }
     }
 
     if (auth) {
       auth.onAuthStateChanged(user => {
         if (user) {
           currentUser = user;
+          document.getElementById('welcomeOnboardingOverlay').classList.remove('open');
           document.getElementById('cloudAuthOverlay').classList.remove('open');
           startUserFirestoreListeners(user);
           if (settings.pinCode && settings.pinCode.length === 4) {
@@ -797,11 +976,11 @@
           }
         } else {
           currentUser = null;
-          document.getElementById('cloudAuthOverlay').classList.add('open');
+          showInitialUnauthenticatedScreen();
         }
       });
     } else {
-      document.getElementById('cloudAuthOverlay').classList.add('open');
+      showInitialUnauthenticatedScreen();
     }
 
     // ============================================================================
@@ -915,8 +1094,8 @@
       if (state.debtors.length === 0) {
         emptyEl.innerHTML = `
           <div class="empty-box">
-            <h3 style="margin-bottom:8px">سجل الديون السحابي فارغ وجاهز للعمل</h3>
-            <p style="color:var(--text-secondary);margin-bottom:16px">حسابك نظيف تماماً (الأرصدة 0). ابدأ الآن بإضافة أول مدين لتسجيل الديون والدفعات ومزامنتها سحابياً.</p>
+            <h3 style="margin-bottom:8px">سجل الديون فارغ وجاهز للعمل</h3>
+            <p style="color:var(--text-secondary);margin-bottom:16px">حسابك نظيف تماماً (الأرصدة 0). ابدأ الآن بإضافة أول مدين لتسجيل الديون والدفعات وحفظها بأمان.</p>
             <button class="btn btn-primary" onclick="openDebtorModal()">+ إضافة أول مدين الآن</button>
           </div>
         `;
@@ -932,11 +1111,12 @@
       document.getElementById('recentTxTable').innerHTML = sortedTx.slice(0, 10).map(t => {
         const isDebt = t.type === 'DEBT';
         const dName = dMap[t.debtorId]?.name || ('عميل #' + t.debtorId);
+        const currLabel = t.currency === 'USD' ? 'دولار ($)' : 'دينار (د.ع)';
         return `<tr>
           <td>${new Date(t.timestamp).toLocaleDateString('ar-IQ')}</td>
           <td style="font-weight:700">${dName}</td>
           <td style="color:${isDebt ? 'var(--crimson)' : 'var(--emerald)'};font-weight:700">${isDebt ? 'دين (+)' : 'تسديد (-)'}</td>
-          <td><span class="badge ${t.currency === 'USD' ? 'badge-usd' : 'badge-iqd'}">${t.currency}</span></td>
+          <td><span class="badge ${t.currency === 'USD' ? 'badge-usd' : 'badge-iqd'}">${currLabel}</span></td>
           <td style="font-weight:700">${t.currency === 'USD' ? fmtUsd(t.amount) : fmtIqd(t.amount)}</td>
           <td>${t.note || ''}</td>
           <td class="no-print">
@@ -949,11 +1129,12 @@
 
       document.getElementById('allReportsTable').innerHTML = sortedTx.map(t => {
         const isDebt = t.type === 'DEBT';
+        const currLabel = t.currency === 'USD' ? 'دولار ($)' : 'دينار (د.ع)';
         return `<tr>
           <td>${new Date(t.timestamp).toLocaleString('ar-IQ')}</td>
           <td style="font-weight:700">${dMap[t.debtorId]?.name || ''}</td>
           <td>${isDebt ? 'دين' : 'تسديد'}</td>
-          <td><span class="badge ${t.currency === 'USD' ? 'badge-usd' : 'badge-iqd'}">${t.currency}</span></td>
+          <td><span class="badge ${t.currency === 'USD' ? 'badge-usd' : 'badge-iqd'}">${currLabel}</span></td>
           <td style="font-weight:700">${t.currency === 'USD' ? fmtUsd(t.amount) : fmtIqd(t.amount)}</td>
           <td>${t.note || ''}</td>
           <td class="no-print">
@@ -992,11 +1173,11 @@
             </div>
             <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
               <div style="background:var(--surface-elevated);padding:10px;border-radius:10px">
-                <div style="font-size:0.75rem;color:var(--text-muted)">المتبقي (د.ع IQD)</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)">المتبقي (د.ع)</div>
                 <div style="font-weight:700;color:${s.balIqd > 0 ? 'var(--crimson)' : 'var(--emerald)'}">${fmtIqd(s.balIqd)}</div>
               </div>
               <div style="background:var(--surface-elevated);padding:10px;border-radius:10px">
-                <div style="font-size:0.75rem;color:var(--text-muted)">المتبقي ($ USD)</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)">المتبقي ($)</div>
                 <div style="font-weight:700;color:${s.balUsd > 0 ? 'var(--crimson)' : 'var(--emerald)'}">${fmtUsd(s.balUsd)}</div>
               </div>
             </div>
@@ -1335,14 +1516,14 @@
     function exportDebtorsCsv() {
       const summaries = state.debtors.map(calcDebtorSummary);
       let csv = '\uFEFF' + `"${settings.officeName} - سجل المدينين"\n` +
-        'الاسم,الهاتف,العنوان,الرصيد المتبقي (د.ع IQD),الرصيد المتبقي ($ USD),تاريخ الاستحقاق\n';
+        'الاسم,الهاتف,العنوان,الرصيد المتبقي (د.ع),الرصيد المتبقي ($),تاريخ الاستحقاق\n';
       summaries.forEach(s => {
         csv += `"${s.debtor.name}","${s.debtor.phone}","${s.debtor.address}",${s.balIqd},${s.balUsd},"${s.debtor.dueDate || ''}"\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'debtors_dual_currency_utf8bom.csv';
+      a.download = 'سجل_المدينين_إكسل.csv';
       a.click();
     }
 
@@ -1356,7 +1537,7 @@
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'transactions_dual_currency_utf8bom.csv';
+      a.download = 'سجل_العمليات_المالية_إكسل.csv';
       a.click();
     }
 
@@ -1365,7 +1546,7 @@
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `debt_ledger_backup_${Date.now()}.json`;
+      a.download = `نسخة_احتياطية_سجل_الديون_${Date.now()}.json`;
       a.click();
     }
 
@@ -1380,9 +1561,9 @@
             state = { debtors: parsed.debtors, transactions: parsed.transactions };
             saveLocalCacheForCurrentUser();
             await forcePushAllToFirestore();
-            alert('تمت استعادة النسخة الاحتياطية ومزامنتها سحابياً بنجاح!');
+            alert('تمت استعادة النسخة الاحتياطية وحفظها بنجاح!');
           }
-        } catch (err) { alert('ملف JSON غير صالح'); }
+        } catch (err) { alert('يرجى اختيار ملف نسخة احتياطية صالح'); }
       };
       reader.readAsText(file);
     }

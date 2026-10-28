@@ -88,6 +88,7 @@ import com.example.data.repository.LedgerRepository
 import com.example.ui.AppScreen
 import com.example.ui.LedgerUiState
 import com.example.ui.LedgerViewModel
+import com.example.ui.components.AnimatedWelcomeOnboardingScreen
 import com.example.ui.components.ClearanceCelebrationDialog
 import com.example.ui.components.CloudAuthScreen
 import com.example.ui.components.DebtorFormDialog
@@ -156,6 +157,7 @@ fun LedgerProductionApp(viewModel: LedgerViewModel) {
     val authErrorMessage by viewModel.authErrorMessage.collectAsStateWithLifecycle()
     val authInfoMessage by viewModel.authInfoMessage.collectAsStateWithLifecycle()
     val cloudSyncStatus by viewModel.cloudSyncStatus.collectAsStateWithLifecycle()
+    val hasSeenWelcomeIntro by viewModel.hasSeenWelcomeIntro.collectAsStateWithLifecycle()
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle()
     val officeName by viewModel.officeName.collectAsStateWithLifecycle()
     val usdToIqdRate by viewModel.usdToIqdRate.collectAsStateWithLifecycle()
@@ -168,23 +170,32 @@ fun LedgerProductionApp(viewModel: LedgerViewModel) {
     val hasLocalSnapshot by viewModel.hasLocalSnapshot.collectAsStateWithLifecycle()
     val localSnapshotTimestamp by viewModel.localSnapshotTimestamp.collectAsStateWithLifecycle()
 
-    // If user is not signed in to a cloud/office account yet, show the CloudAuthScreen
+    // If user is not signed in yet, show the Interactive Animated Welcome Onboarding first, then CloudAuthScreen
     if (authSession == null) {
-        CloudAuthScreen(
-            isLoading = isAuthLoading,
-            errorMessage = authErrorMessage,
-            infoMessage = authInfoMessage,
-            onClearMessages = { viewModel.clearAuthMessages() },
-            onSignUpNewOffice = { chosenOffice, chosenRate, email, password ->
-                viewModel.registerNewOfficeAccount(chosenOffice, chosenRate, email, password)
-            },
-            onSignInExistingOffice = { email, password ->
-                viewModel.loginWithEmailPassword(email, password)
-            },
-            onRequestPasswordReset = { email ->
-                viewModel.sendPasswordReset(email)
-            }
-        )
+        if (!hasSeenWelcomeIntro) {
+            AnimatedWelcomeOnboardingScreen(
+                onStartNow = { viewModel.completeWelcomeIntro() }
+            )
+        } else {
+            CloudAuthScreen(
+                isLoading = isAuthLoading,
+                errorMessage = authErrorMessage,
+                infoMessage = authInfoMessage,
+                onClearMessages = { viewModel.clearAuthMessages() },
+                onSignUpNewOffice = { chosenOffice, chosenRate, email, password ->
+                    viewModel.registerNewOfficeAccount(chosenOffice, chosenRate, email, password)
+                },
+                onSignInExistingOffice = { email, password ->
+                    viewModel.loginWithEmailPassword(email, password)
+                },
+                onRequestPasswordReset = { email ->
+                    viewModel.sendPasswordReset(email)
+                },
+                onReopenWelcomeIntro = {
+                    viewModel.reopenWelcomeIntro()
+                }
+            )
+        }
         return
     }
 
@@ -826,7 +837,7 @@ private fun TopSaaSHeader(
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = "سجل الديون السحابي (د.ع IQD | $ USD)",
+                            text = "حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت",
                             style = MaterialTheme.typography.labelSmall,
                             color = colors.textMuted
                         )
@@ -1021,7 +1032,7 @@ private fun CollapsibleSidebar(
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = "مزامنة سحابية (IQD | USD)",
+                                text = "حفظ سحابي آمن ومزامنة تلقائية",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color(0xFF94A3B8)
                             )

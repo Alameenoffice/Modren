@@ -61,6 +61,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.ui.LedgerUiState
+import com.example.ui.components.DeveloperCreditCard
 import com.example.ui.components.ResetAllDataConfirmationDialog
 import com.example.ui.theme.LocalLedgerColors
 import com.example.util.ExportAndBackupManager
@@ -95,7 +96,7 @@ fun BackupAndExportScreen(
 
     var showResetConfirmationModal by remember { mutableStateOf(false) }
 
-    val saveJsonLauncher = rememberLauncherForActivityResult(
+    val saveBackupLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         if (uri != null) {
@@ -108,7 +109,7 @@ fun BackupAndExportScreen(
         }
     }
 
-    val openJsonLauncher = rememberLauncherForActivityResult(
+    val openBackupLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
@@ -119,7 +120,7 @@ fun BackupAndExportScreen(
         }
     }
 
-    val saveDebtorsCsvLauncher = rememberLauncherForActivityResult(
+    val saveDebtorsExcelLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
     ) { uri ->
         if (uri != null) {
@@ -140,7 +141,7 @@ fun BackupAndExportScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 1. Firebase Cloud Account & Sync Card (users/{uid})
+        // 1. Cloud Account & Automatic Sync Card (Clean Arabic)
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -167,18 +168,18 @@ fun BackupAndExportScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "الحساب السحابي والمزامنة (Firebase Firestore)",
+                                text = "حساب المكتب والحفظ السحابي الآمن",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = colors.textPrimary,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "البريد المسجل: ${userEmail.ifBlank { "حساب محلي" }}",
+                                text = "البريد المسجل: ${userEmail.ifBlank { "حساب مكتب نشط" }}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.textSecondary
                             )
                             Text(
-                                text = "المسار السحابي المعزول: users/${userUid.take(10)}.../debtors & transactions",
+                                text = "حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = colors.textMuted
                             )
@@ -205,7 +206,7 @@ fun BackupAndExportScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "$cloudSyncStatus • محفوظ: ${uiState.debtors.size} مدين و ${uiState.transactions.size} عملية",
+                                text = "$cloudSyncStatus • المسجل حالياً: ${uiState.debtors.size} مدين و ${uiState.transactions.size} عملية",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.textPrimary
                             )
@@ -228,7 +229,7 @@ fun BackupAndExportScreen(
                         ) {
                             Icon(Icons.Default.CloudSync, contentDescription = null, modifier = Modifier.size(17.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("مزامنة سحابية الآن", color = Color.White)
+                            Text("مزامنة وحفظ الآن", color = Color.White)
                         }
 
                         OutlinedButton(
@@ -253,7 +254,7 @@ fun BackupAndExportScreen(
             }
         }
 
-        // 2. Office Name, Exchange Rate & PIN Security Settings Card
+        // 2. Office Name, Exchange Rate & Security Settings Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -333,7 +334,7 @@ fun BackupAndExportScreen(
                         ) {
                             Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(if (hasPinCode) "تغيير / إلغاء رمز PIN (مفعل)" else "تفعيل قفل التطبيق برمز PIN")
+                            Text(if (hasPinCode) "تغيير / إلغاء رمز القفل (مفعل)" else "تفعيل قفل التطبيق برمز سري")
                         }
 
                         if (hasPinCode) {
@@ -352,7 +353,7 @@ fun BackupAndExportScreen(
             }
         }
 
-        // 3. JSON Full Database Backup & Restore Card
+        // 3. Full Database Backup & Restore Card (Friendly Arabic Labels)
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -369,14 +370,14 @@ fun BackupAndExportScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "النسخ الاحتياطي الشامل والاستعادة (JSON)",
+                            text = "النسخ الاحتياطي الشامل والاستعادة على الهاتف",
                             style = MaterialTheme.typography.titleLarge,
                             color = colors.textPrimary
                         )
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "احفظ نسخة احتياطية كاملة لقاعدة البيانات بملف (JSON) في هاتفك، أو استعد بياناتك بضغطة زر في أي وقت.",
+                        text = "احفظ نسخة احتياطية شاملة لجميع السجلات والحسابات على هاتفك، أو استعد بياناتك بضغطة زر في أي وقت.",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.textSecondary
                     )
@@ -445,7 +446,7 @@ fun BackupAndExportScreen(
                     ) {
                         Button(
                             onClick = {
-                                saveJsonLauncher.launch("debt_ledger_backup_${System.currentTimeMillis()}.json")
+                                saveBackupLauncher.launch("نسخة_احتياطية_سجل_الديون_${System.currentTimeMillis()}.json")
                             },
                             modifier = Modifier
                                 .weight(1f)
@@ -455,12 +456,12 @@ fun BackupAndExportScreen(
                         ) {
                             Icon(Icons.Default.FileDownload, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("حفظ ملف JSON بالهاتف", color = Color.White)
+                            Text("حفظ نسخة احتياطية شاملة على الهاتف", color = Color.White)
                         }
 
                         OutlinedButton(
                             onClick = {
-                                openJsonLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
+                                openBackupLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
                             },
                             modifier = Modifier
                                 .weight(1f)
@@ -469,7 +470,7 @@ fun BackupAndExportScreen(
                         ) {
                             Icon(Icons.Default.FileUpload, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("استعادة من ملف JSON")
+                            Text("استعادة نسخة احتياطية من الهاتف")
                         }
                     }
 
@@ -484,7 +485,7 @@ fun BackupAndExportScreen(
                                     fileName = "debt_ledger_backup.json",
                                     mimeType = "application/json",
                                     contentBytes = json.toByteArray(Charsets.UTF_8),
-                                    shareTitle = "مشاركة ملف النسخة الاحتياطية JSON"
+                                    shareTitle = "مشاركة ملف النسخة الاحتياطية الشاملة"
                                 )
                             }
                         },
@@ -493,13 +494,13 @@ fun BackupAndExportScreen(
                     ) {
                         Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("مشاركة ملف النسخة الاحتياطية (JSON) عبر التطبيقات")
+                        Text("مشاركة النسخة الاحتياطية الشاملة عبر التطبيقات")
                     }
                 }
             }
         }
 
-        // 4. Excel (CSV UTF-8-BOM) & PDF Master Exports Card
+        // 4. Excel & Printable Master Reports Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -516,14 +517,14 @@ fun BackupAndExportScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "تصدير التقارير وكشوفات الحسابات (Excel & PDF)",
+                            text = "تصدير ملف إكسل (Excel) وطباعة الكشوفات",
                             style = MaterialTheme.typography.titleLarge,
                             color = colors.textPrimary
                         )
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "يدعم التصدير بصيغة Excel (CSV بترميز UTF-8-BOM لدعم العربية) مع ترويسة ($officeName) وفصل واضح لنوع العملة (IQD / USD).",
+                        text = "يدعم تصدير الجداول بملف إكسل (Excel) باللغة العربية الكاملة مع ترويسة ($officeName) وفصل واضح لرصيد الدينار العراقي والدولار الأمريكي.",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.textSecondary
                     )
@@ -538,10 +539,10 @@ fun BackupAndExportScreen(
                             )
                             ExportAndBackupManager.saveAndShareFile(
                                 context = context,
-                                fileName = "debtors_dual_currency_utf8bom.csv",
+                                fileName = "debtors_dual_currency_excel.csv",
                                 mimeType = "text/csv",
                                 contentBytes = csv.toByteArray(Charsets.UTF_8),
-                                shareTitle = "تصدير سجل المدينين والأرصدة (Excel CSV)"
+                                shareTitle = "تصدير ملف إكسل (Excel) لسجل المدينين"
                             )
                         },
                         modifier = Modifier
@@ -552,21 +553,21 @@ fun BackupAndExportScreen(
                     ) {
                         Icon(Icons.Default.FileDownload, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("تصدير ومشاركة سجل المدينين (Excel CSV - IQD & USD)", color = Color.White)
+                        Text("تصدير ملف إكسل (Excel) ومشاركته", color = Color.White)
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedButton(
                         onClick = {
-                            saveDebtorsCsvLauncher.launch("سجل_المدينين_${System.currentTimeMillis()}.csv")
+                            saveDebtorsExcelLauncher.launch("سجل_المدينين_${System.currentTimeMillis()}.csv")
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Icon(Icons.Default.FileDownload, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("حفظ ملف Excel CSV مباشرة في ذاكرة الهاتف")
+                        Text("حفظ ملف إكسل (Excel) مباشرة على الهاتف")
                     }
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colors.subtleBorder)
@@ -576,13 +577,13 @@ fun BackupAndExportScreen(
                             val pdf = ExportAndBackupManager.generateStatementOrReportPdfFile(
                                 context = context,
                                 officeName = officeName,
-                                title = "التقرير المالي الشامل لسجل الديون (IQD | USD)",
+                                title = "التقرير المالي الشامل لسجل الديون (دينار عراقي | دولار أمريكي)",
                                 subtitle = "إجمالي المدينين: ${uiState.debtors.size} • المدينون النشطون: ${uiState.activeDebtorsCount}",
                                 summaryLines = listOf(
-                                    "المستحق بالدينار (IQD): ${Formatters.formatIqd(uiState.totalOutstandingDebtIqd)} | المحصل: ${Formatters.formatIqd(uiState.totalCollectedPaymentsIqd)}",
-                                    "المستحق بالدولار (USD): ${Formatters.formatUsd(uiState.totalOutstandingDebtUsd)} | المحصل: ${Formatters.formatUsd(uiState.totalCollectedPaymentsUsd)}"
+                                    "المستحق بالدينار العراقي: ${Formatters.formatIqd(uiState.totalOutstandingDebtIqd)} | المحصل: ${Formatters.formatIqd(uiState.totalCollectedPaymentsIqd)}",
+                                    "المستحق بالدولار الأمريكي: ${Formatters.formatUsd(uiState.totalOutstandingDebtUsd)} | المحصل: ${Formatters.formatUsd(uiState.totalCollectedPaymentsUsd)}"
                                 ),
-                                tableHeaders = listOf("اسم المدين", "الهاتف", "المتبقي (د.ع IQD)", "المتبقي ($ USD)", "الحالة"),
+                                tableHeaders = listOf("اسم المدين", "الهاتف", "المتبقي (د.ع)", "المتبقي ($)", "الحالة"),
                                 tableRows = uiState.debtorSummaries.map { s ->
                                     listOf(
                                         s.debtor.name,
@@ -608,13 +609,18 @@ fun BackupAndExportScreen(
                     ) {
                         Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("طباعة / حفظ التقرير المالي الشامل كملف PDF", color = Color.White)
+                        Text("طباعة / حفظ التقرير المالي الشامل", color = Color.White)
                     }
                 }
             }
         }
 
-        // 5. Factory Reset / Wipe All Data Card
+        // 5. Prominent Developer Credit & Support Card (أحمد أبو رسلان - 07512362567)
+        item {
+            DeveloperCreditCard(darkStyle = false)
+        }
+
+        // 6. Factory Reset / Wipe All Data Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),

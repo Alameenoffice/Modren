@@ -970,7 +970,7 @@ fun DebtorStatementScreen(
                                     fileName = "statement_${debtor.id}.csv",
                                     mimeType = "text/csv",
                                     contentBytes = csv.toByteArray(Charsets.UTF_8),
-                                    shareTitle = "تصدير كشف حساب ${debtor.name} (Excel CSV)"
+                                    shareTitle = "تصدير كشف حساب ${debtor.name} - ملف إكسل (Excel)"
                                 )
                             },
                             modifier = Modifier.weight(1f),
@@ -978,7 +978,7 @@ fun DebtorStatementScreen(
                         ) {
                             Icon(Icons.Default.FileDownload, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("تصدير Excel CSV")
+                            Text("تصدير ملف إكسل (Excel)")
                         }
 
                         OutlinedButton(

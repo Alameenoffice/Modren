@@ -30,7 +30,7 @@ class ExampleRobolectricTest {
         assertEquals("سجل الديون", appName)
         assertEquals("مكتب المحاسبة والتجارة العامة", defaultOfficeName)
         assertEquals("mizan-debt", FirebaseCloudSyncManager.PROJECT_ID)
-        assertEquals("AIzaSyANINqHh_7whX_qbQeuJYTfNduSxHIqStc", FirebaseCloudSyncManager.API_KEY)
+        assertEquals("AIzaSyANInqHh_7whX_qbQeuJYTfNduSxHIqGtc", FirebaseCloudSyncManager.API_KEY)
     }
 
     @Test

@@ -121,8 +121,14 @@ class LedgerViewModel(
     private val _authInfoMessage = MutableStateFlow<String?>(null)
     val authInfoMessage: StateFlow<String?> = _authInfoMessage.asStateFlow()
 
-    private val _cloudSyncStatus = MutableStateFlow("جاهز للمزامنة السحابية والعمل بدون إنترنت")
+    private val _cloudSyncStatus = MutableStateFlow("حفظ سحابي آمن ومزامنة تلقائية + عمل كامل بدون إنترنت")
     val cloudSyncStatus: StateFlow<String> = _cloudSyncStatus.asStateFlow()
+
+    // Interactive Welcome Onboarding Intro State (shown before Sign-Up/Sign-In)
+    private val _hasSeenWelcomeIntro = MutableStateFlow(
+        prefs.getBoolean("has_seen_welcome_intro_v1", false)
+    )
+    val hasSeenWelcomeIntro: StateFlow<Boolean> = _hasSeenWelcomeIntro.asStateFlow()
 
     // Onboarding & Office Name
     private val _isOnboardingCompleted = MutableStateFlow(
@@ -235,6 +241,15 @@ class LedgerViewModel(
         _authInfoMessage.value = null
     }
 
+    fun completeWelcomeIntro() {
+        _hasSeenWelcomeIntro.value = true
+        prefs.edit().putBoolean("has_seen_welcome_intro_v1", true).apply()
+    }
+
+    fun reopenWelcomeIntro() {
+        _hasSeenWelcomeIntro.value = false
+    }
+
     fun registerNewOfficeAccount(
         officeNameInput: String,
         exchangeRateInput: Double,
@@ -290,9 +305,9 @@ class LedgerViewModel(
                 )
                 val pushed = FirebaseCloudSyncManager.pushSettingsToFirestore(session, newSettings)
                 _cloudSyncStatus.value = if (pushed) {
-                    "متصل ومتزامن سحابياً (users/${session.uid.take(6)}...)"
+                    "متصل ومتزامن تلقائياً بأمان ✓"
                 } else {
-                    "محفوظ محلياً • سيتم الرفع للسحابة تلقائياً عند توفر الشبكة"
+                    "محفوظ بأمان على الهاتف • سيتم المزامنة تلقائياً عند توفر الشبكة"
                 }
                 _statusBannerMessage.value = "تم إنشاء حساب «$cleanOffice» بنجاح والبدء بسجل نظيف تماماً"
             } else {
@@ -327,11 +342,11 @@ class LedgerViewModel(
                         debtors = emptyList(),
                         transactions = emptyList()
                     )
-                    _cloudSyncStatus.value = "وضع عدم الاتصال (Offline Persistence مفعل)"
-                    _statusBannerMessage.value = "تم إنشاء حساب «$cleanOffice» محلياً (سيتم المزامنة فور الاتصال بالإنترنت)"
+                    _cloudSyncStatus.value = "يعمل بدون إنترنت • محفوظ بأمان على الهاتف"
+                    _statusBannerMessage.value = "تم إنشاء حساب «$cleanOffice» على الهاتف (سيتم المزامنة فور الاتصال بالإنترنت)"
                 } else {
                     _authErrorMessage.value = signUpResult.exceptionOrNull()?.message
-                        ?: "تعذر إنشاء الحساب، يرجى التحقق من البريد الإلكتروني وكلمة المرور."
+                        ?: "يرجى التأكد من اتصالك بالإنترنت أو صحة البريد الإلكتروني وكلمة المرور."
                 }
             }
             _isAuthLoading.value = false
@@ -387,16 +402,16 @@ class LedgerViewModel(
                         debtors = resolvedDebtors,
                         transactions = resolvedTxs
                     )
-                    _cloudSyncStatus.value = "متصل ومتزامن سحابياً ✓ (${resolvedDebtors.size} مدين • ${resolvedTxs.size} عملية)"
-                    _statusBannerMessage.value = "مرحباً بعودتك إلى «${_officeName.value}» • تم استرجاع بياناتك السحابية بنجاح"
+                    _cloudSyncStatus.value = "متصل ومتزامن تلقائياً ✓ (${resolvedDebtors.size} مدين • ${resolvedTxs.size} عملية)"
+                    _statusBannerMessage.value = "مرحباً بعودتك إلى «${_officeName.value}» • تم استرجاع جميع حساباتك بنجاح"
                 } else if (cachedBundle != null) {
                     repository.replaceEntireDatabase(cachedBundle.debtors, cachedBundle.transactions)
                     cachedBundle.settings?.let { applySettingsLocally(it) }
-                    _cloudSyncStatus.value = "تم استرجاع النسخة المحلية المحفوظة (Offline Persistence)"
+                    _cloudSyncStatus.value = "تم استرجاع النسخة المحفوظة على الهاتف (بدون إنترنت)"
                     _statusBannerMessage.value = "تم فتح الحساب واسترجاع بياناتك المحفوظة"
                 } else {
                     repository.clearAllData()
-                    _cloudSyncStatus.value = "متصل بالسحابة • سجل جديد جاهز للعمل"
+                    _cloudSyncStatus.value = "متصل ومتزامن • سجل جديد جاهز للعمل"
                     _statusBannerMessage.value = "تم تسجيل الدخول بنجاح"
                 }
                 _currentScreen.value = AppScreen.DASHBOARD
@@ -422,11 +437,11 @@ class LedgerViewModel(
                         repository.replaceEntireDatabase(bundle.debtors, bundle.transactions)
                         bundle.settings?.let { applySettingsLocally(it) }
                     }
-                    _cloudSyncStatus.value = "وضع عدم الاتصال (Offline Persistence)"
-                    _statusBannerMessage.value = "تم تسجيل الدخول بدون إنترنت واسترجاع بياناتك المحلية"
+                    _cloudSyncStatus.value = "يعمل بدون إنترنت • محفوظ بأمان على الهاتف"
+                    _statusBannerMessage.value = "تم تسجيل الدخول بدون إنترنت واسترجاع بياناتك المحفوظة"
                 } else {
                     _authErrorMessage.value = signInResult.exceptionOrNull()?.message
-                        ?: "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+                        ?: "البريد الإلكتروني أو كلمة المرور غير صحيحة"
                 }
             }
             _isAuthLoading.value = false
@@ -510,9 +525,9 @@ class LedgerViewModel(
                         repository.replaceEntireDatabase(bundle.debtors, bundle.transactions)
                     }
                     bundle.settings?.let { applySettingsLocally(it) }
-                    _cloudSyncStatus.value = "متصل ومتزامن سحابياً ✓ (users/${session.uid.take(6)}...)"
+                    _cloudSyncStatus.value = "متصل ومتزامن تلقائياً بأمان ✓"
                     if (!silent) {
-                        _statusBannerMessage.value = "تمت المزامنة السحابية بنجاح"
+                        _statusBannerMessage.value = "تمت المزامنة وحفظ البيانات بنجاح"
                     }
                 }
             } else {
@@ -523,15 +538,15 @@ class LedgerViewModel(
                     transactions = localTxs
                 )
                 _cloudSyncStatus.value = if (ok) {
-                    "متصل ومتزامن سحابياً ✓ (${localDebtors.size} مدين • ${localTxs.size} عملية)"
+                    "متصل ومتزامن تلقائياً ✓ (${localDebtors.size} مدين • ${localTxs.size} عملية)"
                 } else {
-                    "محفوظ محلياً • بانتظار المزامنة السحابية"
+                    "محفوظ على الهاتف • بانتظار المزامنة التلقائية"
                 }
                 if (!silent) {
                     _statusBannerMessage.value = if (ok) {
-                        "تم رفع ومزامنة جميع البيانات مع السحابة بنجاح"
+                        "تم حفظ ومزامنة جميع الحسابات بنجاح"
                     } else {
-                        "تم حفظ البيانات محلياً وسيتم رفعها تلقائياً"
+                        "تم حفظ البيانات على الهاتف وسيتم مزامنتها تلقائياً"
                     }
                 }
             }
@@ -1302,7 +1317,7 @@ class LedgerViewModel(
                     )
                 }
             } catch (e: Exception) {
-                _statusBannerMessage.value = "تعذر قراءة ملف النسخة الاحتياطية: تأكد من صحة ملف JSON"
+                _statusBannerMessage.value = "تعذر قراءة ملف النسخة الاحتياطية، يرجى اختيار ملف نسخة احتياطية صالح"
             }
         }
     }
