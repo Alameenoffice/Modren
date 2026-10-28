@@ -472,6 +472,7 @@ private fun CertificateRow(
 @Composable
 fun RecordTransactionDialog(
     summaries: List<DebtorSummary>,
+    usdToIqdRate: Double = 1500.0,
     preselectedDebtorId: Long? = null,
     initialType: String = TransactionType.PAYMENT,
     initialCurrency: String = CurrencyCode.IQD,
@@ -486,10 +487,12 @@ fun RecordTransactionDialog(
     }
     var txType by remember { mutableStateOf(initialType) }
     var txCurrency by remember { mutableStateOf(initialCurrency) }
+    var convertToOtherCurrency by remember { mutableStateOf(false) }
     var amountText by remember { mutableStateOf("") }
     var noteText by remember { mutableStateOf("") }
     var dropdownExpanded by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val safeRate = if (usdToIqdRate > 0.0) usdToIqdRate else 1500.0
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -765,8 +768,14 @@ fun RecordTransactionDialog(
                 } else {
                     selectedSummary?.currentBalanceIqd ?: 0.0
                 }
+                val otherCurrency = if (txCurrency == CurrencyCode.USD) CurrencyCode.IQD else CurrencyCode.USD
+                val balanceForOtherCurrency = if (otherCurrency == CurrencyCode.USD) {
+                    selectedSummary?.currentBalanceUsd ?: 0.0
+                } else {
+                    selectedSummary?.currentBalanceIqd ?: 0.0
+                }
 
-                AnimatedVisibility(visible = txType == TransactionType.PAYMENT && balanceForSelectedCurrency > 0.009) {
+                AnimatedVisibility(visible = txType == TransactionType.PAYMENT && balanceForSelectedCurrency > 0.009 && !convertToOtherCurrency) {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -816,6 +825,76 @@ fun RecordTransactionDialog(
                     }
                 }
 
+                // Cross-currency payment option (التسديد بعملة مختلفة مع التصريف التلقائي حسب سعر الصرف)
+                AnimatedVisibility(visible = txType == TransactionType.PAYMENT) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(top = 10.dp)) {
+                        FilterChip(
+                            selected = convertToOtherCurrency,
+                            onClick = { convertToOtherCurrency = !convertToOtherCurrency },
+                            label = {
+                                Text(
+                                    text = if (txCurrency == CurrencyCode.USD)
+                                        "استلام دولار ($) وتصريفه تلقائياً لتسديد دين الدينار (1$ = ${Formatters.formatNumber(safeRate)} د.ع)"
+                                    else
+                                        "استلام دينار (د.ع) وتصريفه تلقائياً لتسديد دين الدولار (1$ = ${Formatters.formatNumber(safeRate)} د.ع)",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = colors.primaryInteractiveSoft,
+                                selectedLabelColor = colors.primaryInteractive
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("cross_currency_convert_chip")
+                        )
+
+                        if (convertToOtherCurrency && balanceForOtherCurrency > 0.009) {
+                            val requiredPaidInSelectedCurrency = if (txCurrency == CurrencyCode.USD) {
+                                // Paying in USD to settle IQD debt
+                                kotlin.math.round((balanceForOtherCurrency / safeRate) * 100.0) / 100.0
+                            } else {
+                                // Paying in IQD to settle USD debt
+                                kotlin.math.round(balanceForOtherCurrency * safeRate)
+                            }
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 6.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        amountText = if (txCurrency == CurrencyCode.IQD) {
+                                            requiredPaidInSelectedCurrency.toLong().toString()
+                                        } else {
+                                            requiredPaidInSelectedCurrency.toString()
+                                        }
+                                    },
+                                color = colors.primaryInteractiveSoft.copy(alpha = 0.6f),
+                                border = BorderStroke(1.dp, colors.primaryInteractive)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "تصفير رصيد العملة الأخرى (${Formatters.formatByCurrency(balanceForOtherCurrency, otherCurrency)}) بالتصريف:",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colors.primaryInteractive,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text(
+                                        text = "ادفع ${Formatters.formatByCurrency(requiredPaidInSelectedCurrency, txCurrency)}",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = colors.primaryInteractive,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
@@ -827,9 +906,9 @@ fun RecordTransactionDialog(
                     label = {
                         Text(
                             if (txCurrency == CurrencyCode.USD)
-                                "المبلغ بالدولار الأمريكي ($ USD)"
+                                "المبلغ المستلم/المسجل بالدولار الأمريكي ($ USD)"
                             else
-                                "المبلغ بالدينار العراقي (د.ع IQD)"
+                                "المبلغ المستلم/المسجل بالدينار العراقي (د.ع IQD)"
                         )
                     },
                     placeholder = {
@@ -842,6 +921,31 @@ fun RecordTransactionDialog(
                         .testTag("transaction_amount_input"),
                     shape = RoundedCornerShape(12.dp)
                 )
+
+                // Live conversion preview when convertToOtherCurrency is active
+                val previewInputAmount = amountText.replace(",", "").toDoubleOrNull() ?: 0.0
+                if (txType == TransactionType.PAYMENT && convertToOtherCurrency && previewInputAmount > 0.0) {
+                    val convertedValue = if (txCurrency == CurrencyCode.USD) {
+                        previewInputAmount * safeRate
+                    } else {
+                        kotlin.math.round((previewInputAmount / safeRate) * 100.0) / 100.0
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        color = colors.paymentEmeraldSoft,
+                        border = BorderStroke(1.dp, colors.paymentEmerald)
+                    ) {
+                        Text(
+                            text = "التصريف التلقائي: سيتم خصم ${Formatters.formatByCurrency(convertedValue, otherCurrency)} من رصيد (${Formatters.currencyShortSymbol(otherCurrency)}) بسعر صرف ${Formatters.formatNumber(safeRate)} د.ع",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.paymentEmerald,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(10.dp)
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -900,7 +1004,25 @@ fun RecordTransactionDialog(
                                 errorMessage = "يرجى إدخال مبلغ صحيح أكبر من الصفر"
                                 return@Button
                             }
-                            onConfirm(debtorId, txType, txCurrency, parsedAmount, noteText)
+                            if (txType == TransactionType.PAYMENT && convertToOtherCurrency) {
+                                val convertedAmount = if (txCurrency == CurrencyCode.USD) {
+                                    parsedAmount * safeRate
+                                } else {
+                                    kotlin.math.round((parsedAmount / safeRate) * 100.0) / 100.0
+                                }
+                                val paidLabel = Formatters.formatByCurrency(parsedAmount, txCurrency)
+                                val convertedLabel = Formatters.formatByCurrency(convertedAmount, otherCurrency)
+                                val autoNote = buildString {
+                                    if (noteText.isNotBlank()) {
+                                        append(noteText.trim())
+                                        append(" • ")
+                                    }
+                                    append("استلام $paidLabel وتصريفها تلقائياً بسعر ${Formatters.formatNumber(safeRate)} إلى $convertedLabel")
+                                }
+                                onConfirm(debtorId, txType, otherCurrency, convertedAmount, autoNote)
+                            } else {
+                                onConfirm(debtorId, txType, txCurrency, parsedAmount, noteText)
+                            }
                             onDismiss()
                         },
                         modifier = Modifier

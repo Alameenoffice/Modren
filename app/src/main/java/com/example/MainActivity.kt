@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Assessment
@@ -35,6 +36,7 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Dashboard
@@ -87,6 +89,7 @@ import com.example.ui.AppScreen
 import com.example.ui.LedgerUiState
 import com.example.ui.LedgerViewModel
 import com.example.ui.components.ClearanceCelebrationDialog
+import com.example.ui.components.CloudAuthScreen
 import com.example.ui.components.DebtorFormDialog
 import com.example.ui.components.OfficeAndExchangeSettingsDialog
 import com.example.ui.components.OnboardingSetupDialog
@@ -148,6 +151,11 @@ fun LedgerProductionApp(viewModel: LedgerViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val currentScreen by viewModel.currentScreen.collectAsStateWithLifecycle()
     val isDarkMode by viewModel.isDarkMode.collectAsStateWithLifecycle()
+    val authSession by viewModel.authSession.collectAsStateWithLifecycle()
+    val isAuthLoading by viewModel.isAuthLoading.collectAsStateWithLifecycle()
+    val authErrorMessage by viewModel.authErrorMessage.collectAsStateWithLifecycle()
+    val authInfoMessage by viewModel.authInfoMessage.collectAsStateWithLifecycle()
+    val cloudSyncStatus by viewModel.cloudSyncStatus.collectAsStateWithLifecycle()
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle()
     val officeName by viewModel.officeName.collectAsStateWithLifecycle()
     val usdToIqdRate by viewModel.usdToIqdRate.collectAsStateWithLifecycle()
@@ -159,6 +167,26 @@ fun LedgerProductionApp(viewModel: LedgerViewModel) {
     val statusBannerMessage by viewModel.statusBannerMessage.collectAsStateWithLifecycle()
     val hasLocalSnapshot by viewModel.hasLocalSnapshot.collectAsStateWithLifecycle()
     val localSnapshotTimestamp by viewModel.localSnapshotTimestamp.collectAsStateWithLifecycle()
+
+    // If user is not signed in to a cloud/office account yet, show the CloudAuthScreen
+    if (authSession == null) {
+        CloudAuthScreen(
+            isLoading = isAuthLoading,
+            errorMessage = authErrorMessage,
+            infoMessage = authInfoMessage,
+            onClearMessages = { viewModel.clearAuthMessages() },
+            onSignUpNewOffice = { chosenOffice, chosenRate, email, password ->
+                viewModel.registerNewOfficeAccount(chosenOffice, chosenRate, email, password)
+            },
+            onSignInExistingOffice = { email, password ->
+                viewModel.loginWithEmailPassword(email, password)
+            },
+            onRequestPasswordReset = { email ->
+                viewModel.sendPasswordReset(email)
+            }
+        )
+        return
+    }
 
     // Dialog states
     var showTransactionDialog by remember { mutableStateOf(false) }
@@ -197,9 +225,11 @@ fun LedgerProductionApp(viewModel: LedgerViewModel) {
                         isCollapsed = isSidebarCollapsed,
                         currentScreen = currentScreen,
                         officeName = officeName,
+                        userEmail = authSession?.email.orEmpty(),
                         onToggleCollapse = { isSidebarCollapsed = !isSidebarCollapsed },
                         onSelectScreen = { viewModel.navigateTo(it) },
-                        onEditOfficeSettings = { showOfficeAndExchangeDialog = true }
+                        onEditOfficeSettings = { showOfficeAndExchangeDialog = true },
+                        onLogout = { viewModel.logoutAccount() }
                     )
 
                     Column(modifier = Modifier.weight(1f)) {
@@ -212,6 +242,7 @@ fun LedgerProductionApp(viewModel: LedgerViewModel) {
                             onOpenDrawer = {},
                             onToggleDarkMode = { viewModel.toggleDarkMode() },
                             onOpenOfficeSettings = { showOfficeAndExchangeDialog = true },
+                            onSyncCloudNow = { viewModel.syncWithCloudNow(silent = false) },
                             onLockOrPinSettings = {
                                 if (!pinCode.isNullOrBlank()) viewModel.lockAppNow() else showPinSettingsDialog = true
                             },
@@ -236,12 +267,17 @@ fun LedgerProductionApp(viewModel: LedgerViewModel) {
                                 officeName = officeName,
                                 usdToIqdRate = usdToIqdRate,
                                 showUnifiedEstimate = showUnifiedEstimate,
+                                userEmail = authSession?.email.orEmpty(),
+                                userUid = authSession?.uid.orEmpty(),
+                                cloudSyncStatus = cloudSyncStatus,
                                 hasPinCode = !pinCode.isNullOrBlank(),
                                 hasLocalSnapshot = hasLocalSnapshot,
                                 localSnapshotTimestamp = localSnapshotTimestamp,
                                 onOpenOfficeSettingsDialog = { showOfficeAndExchangeDialog = true },
                                 onOpenPinSettingsDialog = { showPinSettingsDialog = true },
                                 onLockAppNow = { viewModel.lockAppNow() },
+                                onSyncCloudNow = { viewModel.syncWithCloudNow(silent = false) },
+                                onLogoutAccount = { viewModel.logoutAccount() },
                                 onOpenRecordTransaction = { debtorId, type, currency ->
                                     txDialogPreselectedDebtorId = debtorId
                                     txDialogInitialType = type
@@ -274,6 +310,7 @@ fun LedgerProductionApp(viewModel: LedgerViewModel) {
                                 currentScreen = currentScreen,
                                 uiState = uiState,
                                 officeName = officeName,
+                                userEmail = authSession?.email.orEmpty(),
                                 onSelectScreen = { screen ->
                                     viewModel.navigateTo(screen)
                                     scope.launch { drawerState.close() }
@@ -292,6 +329,10 @@ fun LedgerProductionApp(viewModel: LedgerViewModel) {
                                 onOpenPinSettings = {
                                     scope.launch { drawerState.close() }
                                     showPinSettingsDialog = true
+                                },
+                                onLogout = {
+                                    scope.launch { drawerState.close() }
+                                    viewModel.logoutAccount()
                                 }
                             )
                         }
@@ -310,6 +351,7 @@ fun LedgerProductionApp(viewModel: LedgerViewModel) {
                                 onOpenDrawer = { scope.launch { drawerState.open() } },
                                 onToggleDarkMode = { viewModel.toggleDarkMode() },
                                 onOpenOfficeSettings = { showOfficeAndExchangeDialog = true },
+                                onSyncCloudNow = { viewModel.syncWithCloudNow(silent = false) },
                                 onLockOrPinSettings = {
                                     if (!pinCode.isNullOrBlank()) viewModel.lockAppNow() else showPinSettingsDialog = true
                                 },
@@ -405,12 +447,17 @@ fun LedgerProductionApp(viewModel: LedgerViewModel) {
                                     officeName = officeName,
                                     usdToIqdRate = usdToIqdRate,
                                     showUnifiedEstimate = showUnifiedEstimate,
+                                    userEmail = authSession?.email.orEmpty(),
+                                    userUid = authSession?.uid.orEmpty(),
+                                    cloudSyncStatus = cloudSyncStatus,
                                     hasPinCode = !pinCode.isNullOrBlank(),
                                     hasLocalSnapshot = hasLocalSnapshot,
                                     localSnapshotTimestamp = localSnapshotTimestamp,
                                     onOpenOfficeSettingsDialog = { showOfficeAndExchangeDialog = true },
                                     onOpenPinSettingsDialog = { showPinSettingsDialog = true },
                                     onLockAppNow = { viewModel.lockAppNow() },
+                                    onSyncCloudNow = { viewModel.syncWithCloudNow(silent = false) },
+                                    onLogoutAccount = { viewModel.logoutAccount() },
                                     onOpenRecordTransaction = { debtorId, type, currency ->
                                         txDialogPreselectedDebtorId = debtorId
                                         txDialogInitialType = type
@@ -444,7 +491,6 @@ fun LedgerProductionApp(viewModel: LedgerViewModel) {
         }
     }
 
-    // First-time Onboarding Setup Modal
     if (!isOnboardingCompleted) {
         OnboardingSetupDialog(
             initialOfficeName = officeName,
@@ -458,6 +504,7 @@ fun LedgerProductionApp(viewModel: LedgerViewModel) {
     if (showTransactionDialog) {
         RecordTransactionDialog(
             summaries = uiState.debtorSummaries,
+            usdToIqdRate = usdToIqdRate,
             preselectedDebtorId = txDialogPreselectedDebtorId,
             initialType = txDialogInitialType,
             initialCurrency = txDialogInitialCurrency,
@@ -535,12 +582,17 @@ private fun MainScreenContent(
     officeName: String,
     usdToIqdRate: Double,
     showUnifiedEstimate: Boolean,
+    userEmail: String,
+    userUid: String,
+    cloudSyncStatus: String,
     hasPinCode: Boolean,
     hasLocalSnapshot: Boolean,
     localSnapshotTimestamp: Long,
     onOpenOfficeSettingsDialog: () -> Unit,
     onOpenPinSettingsDialog: () -> Unit,
     onLockAppNow: () -> Unit,
+    onSyncCloudNow: () -> Unit,
+    onLogoutAccount: () -> Unit,
     onOpenRecordTransaction: (debtorId: Long?, initialType: String, initialCurrency: String) -> Unit,
     onOpenAddDebtor: () -> Unit,
     onOpenEditDebtor: (DebtorEntity) -> Unit,
@@ -634,12 +686,17 @@ private fun MainScreenContent(
                 uiState = uiState,
                 officeName = officeName,
                 usdToIqdRate = usdToIqdRate,
+                userEmail = userEmail,
+                userUid = userUid,
+                cloudSyncStatus = cloudSyncStatus,
                 hasPinCode = hasPinCode,
                 hasLocalSnapshot = hasLocalSnapshot,
                 localSnapshotTimestamp = localSnapshotTimestamp,
                 onOpenOfficeSettings = onOpenOfficeSettingsDialog,
                 onOpenPinSettings = onOpenPinSettingsDialog,
                 onLockAppNow = onLockAppNow,
+                onSyncCloudNow = onSyncCloudNow,
+                onLogoutAccount = onLogoutAccount,
                 onResetAllApplicationData = { viewModel.resetAllApplicationData(context) },
                 onCreateLocalSnapshot = onCreateLocalSnapshot,
                 onRestoreLocalSnapshot = onRestoreLocalSnapshot,
@@ -660,6 +717,7 @@ private fun TopSaaSHeader(
     onOpenDrawer: () -> Unit,
     onToggleDarkMode: () -> Unit,
     onOpenOfficeSettings: () -> Unit,
+    onSyncCloudNow: () -> Unit,
     onLockOrPinSettings: () -> Unit,
     onNewTransaction: () -> Unit
 ) {
@@ -768,7 +826,7 @@ private fun TopSaaSHeader(
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = "سجل الديون والمحاسبة (د.ع IQD | $ USD)",
+                            text = "سجل الديون السحابي (د.ع IQD | $ USD)",
                             style = MaterialTheme.typography.labelSmall,
                             color = colors.textMuted
                         )
@@ -779,6 +837,17 @@ private fun TopSaaSHeader(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
+                    IconButton(
+                        onClick = onSyncCloudNow,
+                        modifier = Modifier.testTag("header_cloud_sync_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CloudSync,
+                            contentDescription = "مزامنة سحابية فورية",
+                            tint = colors.paymentEmerald
+                        )
+                    }
+
                     IconButton(
                         onClick = onOpenOfficeSettings,
                         modifier = Modifier.testTag("open_office_exchange_settings_button")
@@ -834,9 +903,11 @@ private fun CollapsibleSidebar(
     isCollapsed: Boolean,
     currentScreen: AppScreen,
     officeName: String,
+    userEmail: String,
     onToggleCollapse: () -> Unit,
     onSelectScreen: (AppScreen) -> Unit,
-    onEditOfficeSettings: () -> Unit
+    onEditOfficeSettings: () -> Unit,
+    onLogout: () -> Unit
 ) {
     val colors = LocalLedgerColors.current
     val width by animateDpAsState(
@@ -873,9 +944,11 @@ private fun CollapsibleSidebar(
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = "سجل الديون والمحاسبة",
+                                text = userEmail.ifBlank { "حساب سحابي نشط" },
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF6EE7B7)
+                                color = Color(0xFF6EE7B7),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -927,30 +1000,61 @@ private fun CollapsibleSidebar(
             }
 
             if (!isCollapsed) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color.White.copy(alpha = 0.08f),
-                    modifier = Modifier.clickable { onEditOfficeSettings() }
-                ) {
-                    Column(
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color.White.copy(alpha = 0.08f),
+                        modifier = Modifier.clickable { onEditOfficeSettings() }
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = officeName,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Color(0xFF6EE7B7),
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "مزامنة سحابية (IQD | USD)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF94A3B8)
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = colors.debtCrimson.copy(alpha = 0.2f),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { onLogout() }
                     ) {
-                        Text(
-                            text = officeName,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = Color(0xFF6EE7B7),
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = "نظام العملات المزدوج (IQD | USD)",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF94A3B8)
-                        )
+                        Row(
+                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.Logout,
+                                contentDescription = null,
+                                tint = Color(0xFFFCA5A5),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "تسجيل الخروج",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color(0xFFFCA5A5),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
@@ -963,10 +1067,12 @@ private fun MobileDrawerContent(
     currentScreen: AppScreen,
     uiState: LedgerUiState,
     officeName: String,
+    userEmail: String,
     onSelectScreen: (AppScreen) -> Unit,
     onNewTransaction: () -> Unit,
     onOpenOfficeSettings: () -> Unit,
-    onOpenPinSettings: () -> Unit
+    onOpenPinSettings: () -> Unit,
+    onLogout: () -> Unit
 ) {
     val colors = LocalLedgerColors.current
 
@@ -1000,7 +1106,7 @@ private fun MobileDrawerContent(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "سجل الديون والمحاسبة (IQD | USD)",
+                        text = userEmail.ifBlank { "سجل الديون السحابي (IQD | USD)" },
                         style = MaterialTheme.typography.labelMedium,
                         color = Color(0xFF6EE7B7)
                     )
@@ -1098,24 +1204,55 @@ private fun MobileDrawerContent(
             }
         }
 
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(14.dp),
-            color = Color.White.copy(alpha = 0.08f)
-        ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Text(
-                    text = officeName,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Color(0xFF6EE7B7),
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "المستحق: ${Formatters.formatIqd(uiState.totalOutstandingDebtIqd)} | ${Formatters.formatUsd(uiState.totalOutstandingDebtUsd)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFCBD5E1)
-                )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                color = Color.White.copy(alpha = 0.08f)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text(
+                        text = officeName,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = Color(0xFF6EE7B7),
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "المستحق: ${Formatters.formatIqd(uiState.totalOutstandingDebtIqd)} | ${Formatters.formatUsd(uiState.totalOutstandingDebtUsd)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFCBD5E1)
+                    )
+                }
+            }
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { onLogout() },
+                color = colors.debtCrimson.copy(alpha = 0.22f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(vertical = 10.dp, horizontal = 14.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = null,
+                        tint = Color(0xFFFCA5A5),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "تسجيل الخروج من الحساب",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = Color(0xFFFCA5A5),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

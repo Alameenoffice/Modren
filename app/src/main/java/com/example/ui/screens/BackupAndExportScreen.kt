@@ -20,10 +20,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.CurrencyExchange
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
@@ -71,12 +72,17 @@ fun BackupAndExportScreen(
     uiState: LedgerUiState,
     officeName: String,
     usdToIqdRate: Double,
+    userEmail: String,
+    userUid: String,
+    cloudSyncStatus: String,
     hasPinCode: Boolean,
     hasLocalSnapshot: Boolean,
     localSnapshotTimestamp: Long,
     onOpenOfficeSettings: () -> Unit,
     onOpenPinSettings: () -> Unit,
     onLockAppNow: () -> Unit,
+    onSyncCloudNow: () -> Unit,
+    onLogoutAccount: () -> Unit,
     onResetAllApplicationData: () -> Unit,
     onCreateLocalSnapshot: () -> Unit,
     onRestoreLocalSnapshot: () -> Unit,
@@ -134,7 +140,120 @@ fun BackupAndExportScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Office Name, Exchange Rate & PIN Security Settings Card
+        // 1. Firebase Cloud Account & Sync Card (users/{uid})
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = colors.cardSurface),
+                border = BorderStroke(1.dp, colors.paymentEmerald.copy(alpha = 0.6f))
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(CircleShape)
+                                .background(colors.paymentEmeraldSoft),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudDone,
+                                contentDescription = null,
+                                tint = colors.paymentEmerald,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "الحساب السحابي والمزامنة (Firebase Firestore)",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = colors.textPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "البريد المسجل: ${userEmail.ifBlank { "حساب محلي" }}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.textSecondary
+                            )
+                            Text(
+                                text = "المسار السحابي المعزول: users/${userUid.take(10)}.../debtors & transactions",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.textMuted
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        color = colors.elevatedSurface,
+                        border = BorderStroke(1.dp, colors.subtleBorder)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.VerifiedUser,
+                                contentDescription = null,
+                                tint = colors.paymentEmerald,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "$cloudSyncStatus • محفوظ: ${uiState.debtors.size} مدين و ${uiState.transactions.size} عملية",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.textPrimary
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = onSyncCloudNow,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("sync_cloud_now_button"),
+                            colors = ButtonDefaults.buttonColors(containerColor = colors.paymentEmerald),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.Default.CloudSync, contentDescription = null, modifier = Modifier.size(17.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("مزامنة سحابية الآن", color = Color.White)
+                        }
+
+                        OutlinedButton(
+                            onClick = onLogoutAccount,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("logout_account_button"),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, colors.debtCrimson)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Logout,
+                                contentDescription = null,
+                                tint = colors.debtCrimson,
+                                modifier = Modifier.size(17.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("تسجيل الخروج", color = colors.debtCrimson, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Office Name, Exchange Rate & PIN Security Settings Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -174,7 +293,7 @@ fun BackupAndExportScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "سعر الصرف المعتمد: 1 دولار ($) = ${Formatters.formatNumber(usdToIqdRate)} د.ع",
+                                text = "سعر الصرف المعتمد للتصريف التلقائي: 1 دولار ($) = ${Formatters.formatNumber(usdToIqdRate)} د.ع",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.textSecondary
                             )
@@ -233,59 +352,7 @@ fun BackupAndExportScreen(
             }
         }
 
-        // Local Offline Status Card
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = colors.cardSurface),
-                border = BorderStroke(1.dp, colors.paymentEmerald.copy(alpha = 0.5f))
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(colors.paymentEmeraldSoft),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.VerifiedUser,
-                            contentDescription = null,
-                            tint = colors.paymentEmerald,
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "تخزين محلي آمن 100% بدون إنترنت (IQD | USD)",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = colors.textPrimary
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Icon(
-                                Icons.Default.CloudOff,
-                                contentDescription = null,
-                                tint = colors.paymentEmerald,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                        Text(
-                            text = "محفوظ حالياً: ${uiState.debtors.size} عميل • ${uiState.transactions.size} عملية مالية في قاعدة البيانات المحلية.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.textSecondary
-                        )
-                    }
-                }
-            }
-        }
-
-        // JSON Full Database Backup & Restore Card
+        // 3. JSON Full Database Backup & Restore Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -432,7 +499,7 @@ fun BackupAndExportScreen(
             }
         }
 
-        // Excel (CSV UTF-8-BOM) & PDF Master Exports Card
+        // 4. Excel (CSV UTF-8-BOM) & PDF Master Exports Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -547,7 +614,7 @@ fun BackupAndExportScreen(
             }
         }
 
-        // Factory Reset / Wipe All Data Card
+        // 5. Factory Reset / Wipe All Data Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
